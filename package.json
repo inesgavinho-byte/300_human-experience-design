@@ -1,0 +1,11 @@
+{
+  "name": "300-human-experience-design",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"console.log('Static site ready for Netlify')\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
