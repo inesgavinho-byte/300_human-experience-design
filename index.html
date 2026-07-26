@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Quattrocento+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/media.css">
 </head>
 <body>
 <header class="site-header">
@@ -25,7 +26,11 @@
 </header>
 <main>
 <section class="hero" id="top">
-  <div class="hero-image" role="img" aria-label="Contemporary Portuguese home at first light"></div>
+  <div class="hero-media">
+    <video autoplay muted loop playsinline preload="metadata" poster="/assets/architecture-detail.jpg" aria-label="Contemporary home at first light">
+      <source src="/assets/first-light.mp4" type="video/mp4">
+    </video>
+  </div>
   <div class="hero-copy">
     <div class="story-index"><span>001</span><span>First Light</span></div>
     <h1 data-en="We design how people experience architecture." data-pt="Desenhamos a forma como as pessoas vivem a arquitetura.">We design how people experience architecture.</h1>
@@ -57,8 +62,16 @@
   <blockquote>We design the behaviour of the building around the life of its inhabitants.</blockquote>
 </section>
 <section class="soul">
-  <div class="soul-image"></div>
+  <div class="soul-image" role="img" aria-label="Architectural glass and stone detail"></div>
   <div class="soul-copy"><p class="eyebrow">04 / Technology with soul</p><h2>We believe in artificial intelligence.<br><em>We also believe in vinyl.</em></h2><p>Progress does not require abandoning ritual, memory or materiality.</p></div>
+</section>
+<section class="material-story">
+  <div class="material-copy">
+    <p class="eyebrow">Transition / Retreat</p>
+    <h2>Intelligence should be felt in the transition.</h2>
+    <p>Light recedes. Sound softens. The house gradually becomes quieter with you.</p>
+  </div>
+  <figure><img src="/assets/retreat-stair.jpg" alt="Black marble staircase designed as a quiet transition"><figcaption>Material · Light · Silence</figcaption></figure>
 </section>
 <section class="technology panel" id="technologies">
   <div class="technology-intro"><p class="eyebrow">05 / Technology philosophy</p><h2>Independent<br>by design.</h2><p>No single manufacturer is the best at everything. We select the right technology for each space, each function and each person.</p><blockquote>Our loyalty belongs to the project.</blockquote></div>
