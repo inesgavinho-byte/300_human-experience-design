@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>300 Vision v1.0 · We Design How Buildings Live</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #06080f;
+      --bg-section: #0b0f1a;
+      --bg-card: #111827;
+      --bg-card-hover: #1a2236;
+      --border: #1f2a44;
+      --border-hover: #2d3a5c;
+      --accent: #a78bfa;
+      --accent-light: #c4b5fd;
+      --accent-glow: rgba(167, 139, 250, 0.12);
+      --text-primary: #f0f2f5;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --gradient-accent: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #6d28d9 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(6, 8, 15, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s;
+    }
+    .nav.scrolled { border-color: var(--border); }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+    .logo span { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 1.5px;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .hero-bg .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.1;
+      animation: float 20s ease-in-out infinite;
+    }
+    .hero-bg .orb:nth-child(1) {
+      width: 500px; height: 500px;
+      background: var(--accent);
+      top: -10%; left: -10%;
+      animation-delay: 0s;
+    }
+    .hero-bg .orb:nth-child(2) {
+      width: 400px; height: 400px;
+      background: #5b21b6;
+      bottom: -10%; right: -10%;
+      animation-delay: -7s;
+      opacity: 0.06;
+    }
+    .hero-bg .orb:nth-child(3) {
+      width: 300px; height: 300px;
+      background: var(--accent);
+      top: 50%; left: 50%;
+      animation-delay: -14s;
+      opacity: 0.05;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.05); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      padding: 10px 20px;
+      border-radius: 40px;
+      margin-bottom: 40px;
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    .hero h1 {
+      font-size: clamp(36px, 7vw, 72px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 24px;
+      max-width: 900px;
+    }
+    .hero h1 .line1 { color: var(--text-primary); display: block; }
+    .hero h1 .line2 {
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: var(--text-secondary);
+      max-width: 640px;
+      margin-bottom: 16px;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+    .hero-mission {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 560px;
+      margin-bottom: 48px;
+      font-weight: 300;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--gradient-accent);
+      color: #06080f;
+      box-shadow: 0 4px 24px rgba(139, 92, 246, 0.2);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    .scroll-hint svg { width: 20px; height: 20px; }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    section {
+      padding: 100px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    .section-header .eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: block;
+    }
+    .section-header h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+    .section-header p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .manifesto {
+      background: var(--bg-section);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .manifesto-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+    }
+    .manifesto-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .manifesto-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gradient-accent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .manifesto-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      background: var(--bg-card-hover);
+    }
+    .manifesto-card:hover::before { opacity: 1; }
+    .manifesto-card .icon {
+      width: 48px; height: 48px;
+      background: rgba(167, 139, 250, 0.1);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+    .manifesto-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .manifesto-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .pillar-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .pillar-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gradient-accent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .pillar-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      background: var(--bg-card-hover);
+    }
+    .pillar-card:hover::before { opacity: 1; }
+    .pillar-card .number {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--accent);
+      opacity: 0.3;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+    .pillar-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+    .pillar-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .pillar-card ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 12px;
+    }
+    .pillar-card li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 3px 0 3px 16px;
+      position: relative;
+    }
+    .pillar-card li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 10px;
+      width: 5px; height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+
+    .intelligence-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .int-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      transition: all 0.3s ease;
+    }
+    .int-card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-card-hover);
+    }
+    .int-card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+    .int-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 40px;
+    }
+    .health-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .health-item:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+    .health-item .icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .health-item .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .responsibility {
+      background: var(--bg-section);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .responsibility-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 720px;
+      margin: 0 auto;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .responsibility-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gradient-accent);
+    }
+    .responsibility-card .glow {
+      position: absolute;
+      top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .responsibility-card h3 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .responsibility-card p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      position: relative;
+    }
+    .responsibility-card .highlight {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .vision-cta {
+      background: var(--bg-section);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .vision-cta .quote {
+      font-size: clamp(18px, 3vw, 26px);
+      font-weight: 800;
+      line-height: 1.4;
+      letter-spacing: -0.02em;
+      max-width: 900px;
+      margin: 0 auto 24px;
+    }
+    .vision-cta .quote .violet {
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .vision-cta .attribution {
+      font-size: 14px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    footer {
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+    footer .logo { margin-bottom: 8px; }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      .nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      section { padding: 60px 20px; }
+      .pillars-grid { grid-template-columns: 1fr; }
+      .intelligence-grid { grid-template-columns: 1fr; }
+      .health-grid { grid-template-columns: repeat(2, 1fr); }
+      .responsibility-card { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" id="nav">
+    <div class="logo">300<span>.</span></div>
+    <ul class="nav-links">
+      <li><a href="#missao">Missão</a></li>
+      <li><a href="#pilares">5 Pilares</a></li>
+      <li><a href="#inteligencias">Inteligências</a></li>
+      <li><a href="#saude">Saúde</a></li>
+      <li><a href="#visao">Visão</a></li>
+    </ul>
+  </nav>
+
+  <section class="hero" id="top">
+    <div class="hero-bg">
+      <div class="orb"></div>
+      <div class="orb"></div>
+      <div class="orb"></div>
+    </div>
+    <div class="hero-badge fade-in">
+      <span class="dot"></span>
+      Vision v1.0
+    </div>
+    <h1 class="fade-in">
+      <span class="line1">We Design</span>
+      <span class="line2">How Buildings Live.</span>
+    </h1>
+    <p class="hero-subtitle fade-in">
+      A 300 não é uma empresa de domótica. Não é um gabinete de engenharia. Não é um instalador. É uma empresa de Building Intelligence & Systems Engineering.
+    </p>
+    <p class="hero-mission fade-in">
+      Projeta, constrói e opera edifícios que funcionam como organismos inteligentes — durante toda a sua vida útil.
+    </p>
+    <div class="hero-cta fade-in">
+      <a href="#pilares" class="btn btn-primary">Os 5 Pilares</a>
+      <a href="#visao" class="btn btn-secondary">A Visão a 20 Anos</a>
+    </div>
+    <div class="scroll-hint">
+      <span>Descer</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </section>
+
+  <section class="manifesto" id="missao">
+    <div class="section-header fade-in">
+      <span class="eyebrow">A Mudança de Paradigma</span>
+      <h2>O Edifício como Plataforma</h2>
+      <p>Tal como um smartphone. O hardware é importante. Mas é o software que lhe dá inteligência. Na construção acontece exatamente o mesmo.</p>
+    </div>
+    <div class="manifesto-grid">
+      <div class="manifesto-card fade-in">
+        <div class="icon">🧬</div>
+        <h3>Organismo, não Construção</h3>
+        <p>O edifício deixa de ser uma construção. Passa a ser uma plataforma. A arquitetura é o hardware. A inteligência é o software. A 300 desenvolve ambos.</p>
+      </div>
+      <div class="manifesto-card fade-in">
+        <div class="icon">🔗</div>
+        <h3>Sistema Único</h3>
+        <p>Não existem especialidades isoladas. Existe apenas um organismo. Água, AVAC, energia, segurança, áudio, vídeo, redes, KNX, Matter, robótica, IA — tudo pertence ao mesmo modelo.</p>
+      </div>
+      <div class="manifesto-card fade-in">
+        <div class="icon">🔄</div>
+        <h3>Nunca Concluído</h3>
+        <p>O edifício nunca fica concluído. Fica operacional. Tal como um avião, um data center ou um hospital. A obra termina. Mas a relação começa — durante décadas.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pilares">
+    <div class="section-header fade-in">
+      <span class="eyebrow">Fundamentos</span>
+      <h2>Os 5 Pilares da 300</h2>
+      <p>Design, Engenharia, Execução, Digital Twin e Inteligência Viva.</p>
+    </div>
+    <div class="pillars-grid">
+      <div class="pillar-card fade-in">
+        <div class="number">01</div>
+        <h3>Design</h3>
+        <p>O primeiro produto da 300 não é tecnologia. É projeto. Todo o edifício é pensado desde o primeiro dia para integrar inteligência. Não existe uma fase "onde depois entra a domótica".</p>
+        <ul>
+          <li>Inteligência faz parte da arquitetura</li>
+          <li>Áreas técnicas são arquitetura</li>
+          <li>Manutenção é arquitetura</li>
+          <li>Longevidade é arquitetura</li>
+        </ul>
+      </div>
+
+      <div class="pillar-card fade-in">
+        <div class="number">02</div>
+        <h3>Systems Engineering</h3>
+        <p>Toda a infraestrutura técnica passa a ser concebida como um único sistema. Tudo comunica. Tudo é coordenado.</p>
+        <ul>
+          <li>Modelo digital único</li>
+          <li>Coordenação total</li>
+          <li>Sem disciplinas isoladas</li>
+        </ul>
+      </div>
+
+      <div class="pillar-card fade-in">
+        <div class="number">03</div>
+        <h3>Physical Execution</h3>
+        <p>A 300 não entrega apenas desenhos. Constrói. Mas constrói de forma diferente — através de equipas altamente especializadas, com um único standard.</p>
+        <ul>
+          <li>Water Systems</li>
+          <li>Climate Systems</li>
+          <li>Energy Systems</li>
+          <li>Intelligence Systems</li>
+          <li>Technical Rooms</li>
+        </ul>
+      </div>
+
+      <div class="pillar-card fade-in">
+        <div class="number">04</div>
+        <h3>Digital Twin</h3>
+        <p>Quando a obra termina, o edifício nasce — não apenas fisicamente. Digitalmente. O proprietário recebe um edifício vivo, não um dossier PDF.</p>
+        <ul>
+          <li>Cada objeto com identidade própria</li>
+          <li>Cada equipamento com histórico</li>
+          <li>Conhecimento disponível durante toda a vida útil</li>
+        </ul>
+      </div>
+
+      <div class="pillar-card fade-in">
+        <div class="number">05</div>
+        <h3>Living Intelligence</h3>
+        <p>O edifício aprende. Aprende os hábitos da família. Os consumos. O clima. O comportamento dos equipamentos. O desgaste. A inteligência deixa de ser baseada em regras. Passa a ser baseada em conhecimento.</p>
+        <ul>
+          <li>Aprendizagem contínua</li>
+          <li>Adaptação automática</li>
+          <li>Evolução ao longo de décadas</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="inteligencias">
+    <div class="section-header fade-in">
+      <span class="eyebrow">Domínios</span>
+      <h2>As 6 Inteligências do Edifício</h2>
+      <p>Cada sistema técnico ganha uma camada cognitiva que transforma dados em conhecimento.</p>
+    </div>
+    <div class="intelligence-grid">
+      <div class="int-card fade-in">
+        <h4>💧 Water Intelligence</h4>
+        <p>A água deixa de ser canalização. Passa a ser um sistema cognitivo. O edifício sabe quanto consumiu, quanto reutilizou, quanto desperdiçou, qual a qualidade, qual o risco sanitário, quando substituir filtros, quando uma bomba irá falhar, quando existe uma microfuga.</p>
+      </div>
+      <div class="int-card fade-in">
+        <h4>🌡️ Climate Intelligence</h4>
+        <p>O AVAC deixa de reagir. Passa a antecipar. Conhece ocupação, meteorologia, qualidade do ar, humidade, radiação, hábitos e custos energéticos.</p>
+      </div>
+      <div class="int-card fade-in">
+        <h4>⚡ Energy Intelligence</h4>
+        <p>Toda a energia do edifício é otimizada. Rede, solar, baterias, carregadores, geradores. O edifício decide quando consumir, quando armazenar, quando produzir, quando vender.</p>
+      </div>
+      <div class="int-card fade-in">
+        <h4>👤 Human Intelligence</h4>
+        <p>A casa aprende pessoas. Não cenas. Cada utilizador possui um perfil vivo. O edifício adapta-se continuamente. Sem programação manual.</p>
+      </div>
+      <div class="int-card fade-in">
+        <h4>🔧 Maintenance Intelligence</h4>
+        <p>Não existe manutenção reativa. Existe manutenção preditiva. O edifício identifica degradação antes da falha, agenda intervenções, encomenda peças e prepara equipas.</p>
+      </div>
+      <div class="int-card fade-in">
+        <h4>🏢 Building Health</h4>
+        <p>Cada edifício possui um índice de saúde — como um Apple Watch. Building Health, Water Health, Climate Health, Energy Health, Security Health, Network Health, Intelligence Health. Tudo monitorizado continuamente.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="responsibility" id="saude">
+    <div class="section-header fade-in">
+      <span class="eyebrow">Responsabilidade</span>
+      <h2>Uma Única Entidade Responsável</h2>
+    </div>
+    <div class="responsibility-card fade-in">
+      <div class="glow"></div>
+      <h3>A Nova Responsabilidade</h3>
+      <p>Hoje, quando existe um problema: o canalizador culpa o eletricista, o eletricista culpa o AVAC, o AVAC culpa o integrador, o integrador culpa o fabricante.</p>
+      <p style="margin-top:16px"><span class="highlight">Na 300, existe apenas um responsável: a 300.</span></p>
+      <p style="margin-top:16px">Assumimos integralmente: Projeto, Coordenação, Execução, Comissionamento, Operação, Evolução — durante toda a vida útil do edifício.</p>
+    </div>
+  </section>
+
+  <section class="vision-cta" id="visao">
+    <div class="fade-in">
+      <p class="quote">
+        Daqui a duas décadas, será impensável comprar um edifício sem um Digital Twin,<br>
+        sem inteligência operacional e sem uma entidade responsável pelo seu desempenho.<br>
+        <span class="violet">A 300 não projeta apenas edifícios. A 300 desenha a vida técnica dos edifícios.</span>
+      </p>
+      <p class="attribution">300 Vision v1.0 · We Design How Buildings Live</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="logo">300<span>.</span></div>
+    <p>300 Vision v1.0 · Building Intelligence & Systems Engineering</p>
+  </footer>
+
+  <script>
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
