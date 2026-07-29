@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} — 300 Human Experience Design</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+    
+    :root {
+      --color-cream: #F5F0EB;
+      --color-charcoal: #2C2C2C;
+      --color-warm-gray: #8A8279;
+      --color-bronze: #B08D57;
+      --color-light-gray: #E8E4DF;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--color-charcoal);
+      background: white;
+      line-height: 1.6;
+      font-size: 10pt;
+    }
+    
+    /* Cover Page */
+    .cover {
+      page-break-after: always;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 80px;
+      background: var(--color-cream);
+      position: relative;
+    }
+    
+    .cover-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 72pt;
+      font-weight: 600;
+      color: var(--color-charcoal);
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    
+    .cover-subtitle {
+      font-family: 'Inter', sans-serif;
+      font-size: 11pt;
+      font-weight: 300;
+      color: var(--color-warm-gray);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+    
+    .cover-line {
+      width: 120px;
+      height: 1px;
+      background: var(--color-bronze);
+      margin: 40px 0;
+    }
+    
+    .cover-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28pt;
+      font-weight: 500;
+      color: var(--color-charcoal);
+      line-height: 1.2;
+      max-width: 500px;
+    }
+    
+    .cover-meta {
+      position: absolute;
+      bottom: 60px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 9pt;
+      color: var(--color-warm-gray);
+    }
+    
+    .cover-meta-left {
+      line-height: 1.8;
+    }
+    
+    .cover-meta-right {
+      text-align: right;
+      line-height: 1.8;
+    }
+    
+    /* Section Headers */
+    .section {
+      page-break-before: always;
+      padding: 60px 80px;
+    }
+    
+    .section:first-of-type {
+      page-break-before: auto;
+    }
+    
+    .section-header {
+      margin-bottom: 40px;
+    }
+    
+    .section-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14pt;
+      color: var(--color-bronze);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24pt;
+      font-weight: 600;
+      color: var(--color-charcoal);
+      line-height: 1.2;
+    }
+    
+    .section-line {
+      width: 60px;
+      height: 1px;
+      background: var(--color-bronze);
+      margin-top: 16px;
+    }
+    
+    /* Content */
+    .content {
+      max-width: 100%;
+    }
+    
+    p {
+      margin-bottom: 16px;
+      font-weight: 300;
+      text-align: justify;
+      hyphens: auto;
+    }
+    
+    h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14pt;
+      font-weight: 600;
+      color: var(--color-charcoal);
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+    
+    h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 10pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--color-warm-gray);
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+    
+    /* Quote Block */
+    .quote-block {
+      margin: 32px 0;
+      padding: 24px 32px;
+      border-left: 2px solid var(--color-bronze);
+      background: var(--color-cream);
+    }
+    
+    .quote-block p {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13pt;
+      font-style: italic;
+      color: var(--color-charcoal);
+      margin-bottom: 0;
+      text-align: left;
+    }
+    
+    .quote-block .quote-author {
+      font-family: 'Inter', sans-serif;
+      font-size: 9pt;
+      font-style: normal;
+      color: var(--color-warm-gray);
+      margin-top: 12px;
+    }
+    
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 9pt;
+    }
+    
+    th {
+      background: var(--color-charcoal);
+      color: white;
+      font-weight: 500;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--color-light-gray);
+      vertical-align: top;
+    }
+    
+    tr:nth-child(even) {
+      background: #FAFAF8;
+    }
+    
+    .text-right {
+      text-align: right;
+    }
+    
+    .text-center {
+      text-align: center;
+    }
+    
+    .font-medium {
+      font-weight: 500;
+    }
+    
+    /* Financial Summary */
+    .financial-summary {
+      margin: 32px 0;
+      padding: 24px;
+      background: var(--color-cream);
+      border: 1px solid var(--color-light-gray);
+    }
+    
+    .financial-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--color-light-gray);
+    }
+    
+    .financial-row:last-child {
+      border-bottom: none;
+      font-weight: 600;
+      font-size: 12pt;
+      color: var(--color-charcoal);
+      margin-top: 8px;
+      padding-top: 16px;
+      border-top: 2px solid var(--color-bronze);
+    }
+    
+    /* Two Column Layout */
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin: 24px 0;
+    }
+    
+    /* Equipment Card */
+    .equipment-card {
+      margin: 16px 0;
+      padding: 16px;
+      border: 1px solid var(--color-light-gray);
+      background: #FAFAF8;
+    }
+    
+    .equipment-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    
+    .equipment-card-title {
+      font-weight: 500;
+      font-size: 10pt;
+    }
+    
+    .equipment-card-brand {
+      font-size: 8pt;
+      color: var(--color-bronze);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .equipment-card-specs {
+      font-size: 8pt;
+      color: var(--color-warm-gray);
+    }
+    
+    /* Page Footer */
+    @page {
+      margin: 0;
+    }
+    
+    .page-footer {
+      position: fixed;
+      bottom: 30px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8pt;
+      color: var(--color-warm-gray);
+      border-top: 1px solid var(--color-light-gray);
+      padding-top: 12px;
+    }
+    
+    /* List Styles */
+    ul, ol {
+      margin: 12px 0 12px 20px;
+    }
+    
+    li {
+      margin-bottom: 6px;
+    }
+    
+    /* Experience Block */
+    .experience-block {
+      margin: 24px 0;
+      padding: 20px;
+      background: var(--color-cream);
+      border-left: 3px solid var(--color-bronze);
+    }
+    
+    .experience-block h4 {
+      margin-top: 0;
+      color: var(--color-bronze);
+    }
+    
+    /* System Tag */
+    .system-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--color-charcoal);
+      color: white;
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    
+    /* Print Optimizations */
+    @media print {
+      .section {
+        page-break-before: always;
+      }
+      
+      .cover {
+        page-break-after: always;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Cover Page -->
+  <div class="cover">
+    <div class="cover-logo">300</div>
+    <div class="cover-subtitle">Human Experience Design</div>
+    <div class="cover-line"></div>
+    <div class="cover-title">{{title}}</div>
+    <div class="cover-meta">
+      <div class="cover-meta-left">
+        <div>{{clientName}}</div>
+        <div>{{projectLocation}}</div>
+      </div>
+      <div class="cover-meta-right">
+        <div>Proposta {{proposalCode}}</div>
+        <div>{{date}}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: Understanding -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">01</div>
+      <div class="section-title">Compreensão do Projeto</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="content">
+      <h3>O Cliente e a Sua Família</h3>
+      <p>{{clientDescription}}</p>
+      
+      <h3>A Casa e a Sua Arquitetura</h3>
+      <p>{{buildingDescription}}</p>
+      
+      <div class="two-column">
+        <div>
+          <h4>Estatísticas</h4>
+          <p><strong>Tipologia:</strong> {{buildingType}}</p>
+          <p><strong>Área Total:</strong> {{totalArea}} m²</p>
+          <p><strong>Pisos:</strong> {{totalFloors}}</p>
+          <p><strong>Divisões:</strong> {{totalRooms}}</p>
+        </div>
+        <div>
+          <h4>Sistemas Contemplados</h4>
+          {{#each systems}}
+          <span class="system-tag">{{name}}</span>
+          {{/each}}
+        </div>
+      </div>
+      
+      <h3>Objetivos e Desejos</h3>
+      <p>{{projectGoals}}</p>
+    </div>
+  </div>
+
+  <!-- Section 2: Philosophy -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">02</div>
+      <div class="section-title">A Nossa Filosofia</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="content">
+      <div class="quote-block">
+        <p>"A tecnologia deve ser invisível. O que o habitante deve sentir é a qualidade da sua vida — não a complexidade dos sistemas que a tornam possível."</p>
+        <div class="quote-author">— 300 Human Experience Design</div>
+      </div>
+      
+      <h3>Human Experience Design</h3>
+      <p>Não vendemos equipamentos. Desenhamos experiências. Cada decisão técnica é subordinada a uma pergunta simples: <em>como isto melhora o dia a dia do habitante?</em></p>
+      
+      <h3>Independência de Fabricante</h3>
+      <p>A nossa lealdade pertence ao projeto, não a uma marca. Avaliamos várias plataformas para cada necessidade e justificamos cada escolha com base nas necessidades do cliente, não em acordos comerciais.</p>
+      
+      <h3>Documentação como Ativo</h3>
+      <p>Cada projeto gera documentação completa e transferível: esquemas de princípio, topologias, matrizes de funções, manuais do utilizador. O conhecimento técnico vive no projeto, não nas pessoas que o executaram.</p>
+    </div>
+  </div>
+
+  <!-- Section 3: Experience -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">03</div>
+      <div class="section-title">A Experiência Proposta</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="content">
+      <h3>Cenários de Vida</h3>
+      
+      {{#each experiences}}
+      <div class="experience-block">
+        <h4>{{name}}</h4>
+        <p>{{description}}</p>
+      </div>
+      {{/each}}
+      
+      <h3>Jornada do Habitante</h3>
+      <p>Desenhamos a experiência completa — desde o momento em que o habitante chega a casa até à hora de dormir. Cada transição é pensada: da rua para o hall, do hall para a sala, da sala para o quarto. A tecnologia antecipa, não reage.</p>
+    </div>
+  </div>
+
+  <!-- Section 4: Technical Architecture -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">04</div>
+      <div class="section-title">Arquitetura Técnica</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="content">
+      <h3>Topologia de Sistemas</h3>
+      <p>A arquitetura proposta integra os seguintes sistemas através de protocolos abertos e standard:</p>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Sistema</th>
+            <th>Protocolo</th>
+            <th>Função Principal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each systems}}
+          <tr>
+            <td class="font-medium">{{name}}</td>
+            <td>{{protocol}}</td>
+            <td>{{description}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      
+      <h3>Zonas Técnicas</h3>
+      <p>Os equipamentos ativos são concentrados em zonas técnicas dimensionadas com cálculo de carga térmica e elétrica. Cada zona inclui ventilação forçada quando necessário e acessibilidade para manutenção.</p>
+      
+      <h3>Resiliência e Segurança</h3>
+      <p>O sistema é projetado para continuar operando em caso de falha de um componente. Cada integração inclui ações de fallback documentadas. A rede está segmentada com VLANs dedicadas para cada domínio funcional.</p>
+    </div>
+  </div>
+
+  <!-- Section 5: Equipment -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">05</div>
+      <div class="section-title">Equipamentos e Materiais</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="content">
+      <h3>Lista de Equipamentos</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Divisão</th>
+            <th>Sistema</th>
+            <th>Equipamento</th>
+            <th>Ref.</th>
+            <th>Qtd</th>
+            <th class="text-right">Preço Unit.</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each equipment}}
+          <tr>
+            <td>{{roomName}}</td>
+            <td>{{systemName}}</td>
+            <td class="font-medium">{{name}}</td>
+            <td>{{reference}}</td>
+            <td class="text-center">{{quantity}}</td>
+            <td class="text-right">{{formatCurrency unitCost}}</td>
+            <td class="text-right">{{formatCurrency totalCost}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      
+      <h3>Justificação de Escolhas</h3>
+      <p>Cada equipamento foi selecionado com base em critérios técnicos rigorosos: qualidade de construção, fiabilidade documentada, integração com outros sistemas, e estética. As alternativas consideradas e rejeitadas são documentadas em anexo.</p>
+    </div>
+  </div>
+
+  <!-- Section 6: Investment -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">06</div>
+      <div class="section-title">Investimento</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="content">
+      <h3>Breakdown por Categoria</h3>
+      
+      <div class="financial-summary">
+        <div class="financial-row">
+          <span>Equipamentos e Materiais</span>
+          <span>{{formatCurrency financials.equipmentTotal}}</span>
+        </div>
+        <div class="financial-row">
+          <span>Instalação e Montagem</span>
+          <span>{{formatCurrency financials.installationCost}}</span>
+        </div>
+        <div class="financial-row">
+          <span>Programação e Configuração</span>
+          <span>{{formatCurrency financials.programmingCost}}</span>
+        </div>
+        <div class="financial-row">
+          <span>Commissioning e Testes</span>
+          <span>{{formatCurrency financials.commissioningCost}}</span>
+        </div>
+        <div class="financial-row">
+          <span>Investimento Total</span>
+          <span>{{formatCurrency financials.totalInvestment}}</span>
+        </div>
+      </div>
+      
+      <h3>Termos de Pagamento</h3>
+      <p>Proposta válida por 30 dias. Pagamento em quatro fases:</p>
+      <ul>
+        <li><strong>25%</strong> — À assinatura do contrato</li>
+        <li><strong>35%</strong> — Antes do início da instalação</li>
+        <li><strong>25%</strong> — Após instalação e antes de commissioning</li>
+        <li><strong>15%</strong> — Após aceitação final e entrega</li>
+      </ul>
+      
+      <h3>Manutenção</h3>
+      <p>O primeiro ano de manutenção preventiva está incluído no investimento. Após este período, propomos um contrato de manutenção anual de {{formatCurrency financials.annualMaintenance}} que inclui:</p>
+      <ul>
+        <li>Visitas trimestrais de inspeção</li>
+        <li>Atualizações de firmware</li>
+        <li>Suporte técnico prioritário</li>
+        <li>Relatório anual de estado dos sistemas</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 7: Documentation -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">07</div>
+      <div class="section-title">Documentação de Entrega</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="content">
+      <p>Ao final do projeto, o cliente recebe a seguinte documentação:</p>
+      
+      <h3>Documentação Técnica</h3>
+      <ul>
+        <li>Esquema integral de arquitetura tecnológica</li>
+        <li>Topologia KNX com áreas, linhas e endereços individuais</li>
+        <li>Topologia DALI (se aplicável)</li>
+        <li>Esquema de rede IP e Wi-Fi</li>
+        <li>Matriz de pontos e funções</li>
+        <li>Lista de equipamentos com referências e datasheets</li>
+        <li>Planta de implantação de equipamentos</li>
+        <li>Cálculo de carga elétrica e térmica</li>
+      </ul>
+      
+      <h3>Documentação de Execução</h3>
+      <ul>
+        <li>Ficheiro ETS do projeto (KNX)</li>
+        <li>Ficheiro de programação das plataformas de controlo</li>
+        <li>Configuração de rede (IP, VLAN, Wi-Fi)</li>
+        <li>Credenciais e acessos (com gestão segura)</li>
+        <li>Protocolo de testes e commissioning</li>
+        <li>Relatório de aceitação assinado</li>
+      </ul>
+      
+      <h3>Documentação "As Built"</h3>
+      <ul>
+        <li>Documentação atualizada após alterações em obra</li>
+        <li>Fotos de zonas técnicas e instalação</li>
+        <li>Vídeos de funcionamento dos cenários</li>
+        <li>Manual do utilizador (digital e impresso)</li>
+        <li>Plano de manutenção preventiva</li>
+        <li>Contactos de suporte e garantia</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 8: Warranty -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">08</div>
+      <div class="section-title">Garantia e Suporte</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="content">
+      <h3>Garantia</h3>
+      <p>Todos os equipamentos e serviços estão cobertos por uma garantia de <strong>2 anos</strong> a partir da data de aceitação final. Durante este período, qualquer avaria de equipamento será reparada ou substituída sem custos adicionais.</p>
+      
+      <h3>SLA de Suporte</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo de Incidente</th>
+            <th>Tempo de Resposta</th>
+            <th>Tempo de Resolução</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Crítico (sistema inoperacional)</td>
+            <td>2 horas</td>
+            <td>24 horas</td>
+          </tr>
+          <tr>
+            <td>Alto (função degradada)</td>
+            <td>4 horas</td>
+            <td>48 horas</td>
+          </tr>
+          <tr>
+            <td>Normal (ajuste ou dúvida)</td>
+            <td>8 horas</td>
+            <td>5 dias úteis</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <h3>Contactos</h3>
+      <p>300 Human Experience Design<br>
+      Lisboa, Portugal<br>
+      suporte@300.pt<br>
+      +351 210 000 000</p>
+    </div>
+  </div>
+
+  <!-- Back Cover -->
+  <div class="cover" style="page-break-before: always;">
+    <div style="text-align: center;">
+      <div class="cover-logo" style="font-size: 96pt;">300</div>
+      <div class="cover-subtitle" style="margin-top: 16px;">Human Experience Design</div>
+      <div class="cover-line" style="margin: 40px auto;"></div>
+      <p style="font-family: 'Cormorant Garamond', serif; font-size: 14pt; font-style: italic; color: var(--color-warm-gray); max-width: 400px; margin: 0 auto;">
+        "A diferença não está na lista de equipamentos — está na forma como cada decisão técnica é subordinada à qualidade de vida do habitante."
+      </p>
+    </div>
+    <div class="cover-meta" style="justify-content: center;">
+      <div style="text-align: center; line-height: 1.8;">
+        <div>300 Human Experience Design</div>
+        <div>Lisboa, Portugal</div>
+        <div>www.300.pt</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

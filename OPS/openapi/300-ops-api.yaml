@@ -1,0 +1,6874 @@
+openapi: 3.1.0
+info:
+  title: 300 OPS Platform API
+  description: |
+    300 OPS is an engineering platform for smart buildings. This API provides
+    comprehensive access to project management, engineering evaluation,
+    prescription management, procurement, document generation, integrations,
+    and AI services.
+  version: 1.0.0
+  contact:
+    name: 300 OPS Support
+    email: api@300ops.com
+  license:
+    name: Proprietary
+    url: https://300ops.com/license
+
+servers:
+  - url: https://api.300ops.com/v1
+    description: Production server
+  - url: https://staging-api.300ops.com/v1
+    description: Staging server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+    description: Authentication and authorization endpoints
+  - name: Profiles
+    description: User profile management
+  - name: Projects
+    description: Project lifecycle management
+  - name: Buildings
+    description: Building hierarchy and management
+  - name: Floors
+    description: Floor management within buildings
+  - name: Rooms
+    description: Room and space management
+  - name: Requirements
+    description: Technical and functional requirements
+  - name: Experiences
+    description: User experience definitions
+  - name: Systems
+    description: Building systems management
+  - name: Subsystems
+    description: Subsystem management
+  - name: Equipment
+    description: Equipment management and library
+  - name: Equipment Library
+    description: Master equipment catalog
+  - name: Engineering Engine
+    description: Core engineering evaluation engine
+  - name: Prescriptions
+    description: Technical prescriptions and recommendations
+  - name: Technical Zones
+    description: Zone definitions and management
+  - name: Procurement
+    description: Procurement and value engineering
+  - name: Suppliers
+    description: Supplier management
+  - name: Clients
+    description: Client management
+  - name: Documents
+    description: Document generation and management
+  - name: Integrations
+    description: System integrations and connectors
+  - name: AI Services
+    description: NLP, voice, and AI pattern services
+  - name: AI Local Servers
+    description: On-premise AI server management
+  - name: AI Patterns
+    description: Learned pattern management
+  - name: Explanation Logs
+    description: AI decision explanations
+  - name: Domain Events
+    description: Event logging and auditing
+  - name: Privacy Matrix
+    description: Privacy and compliance matrix
+  - name: Engineering Rules
+    description: Rule-based engineering logic
+  - name: Proposals
+    description: Proposal management
+  - name: WebSocket
+    description: Real-time streaming endpoints
+
+paths:
+  # ─────────────────────────────────────────────────────────
+  # AUTHENTICATION
+  # ─────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate user
+      description: Authenticate a user and return JWT tokens.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      description: Refresh an expired access token using a refresh token.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user
+      description: Invalidate the current session tokens.
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # PROFILES
+  # ─────────────────────────────────────────────────────────
+  /profiles:
+    get:
+      tags: [Profiles]
+      summary: List profiles
+      description: Retrieve a paginated list of user profiles.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+      responses:
+        '200':
+          description: List of profiles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProfiles'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /profiles/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Profiles]
+      summary: Get profile by ID
+      responses:
+        '200':
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Profiles]
+      summary: Update profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Profiles]
+      summary: Delete profile
+      responses:
+        '204':
+          description: Profile deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /profiles/me:
+    get:
+      tags: [Profiles]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # CLIENTS
+  # ─────────────────────────────────────────────────────────
+  /clients:
+    get:
+      tags: [Clients]
+      summary: List clients
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+      responses:
+        '200':
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedClients'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Clients]
+      summary: Create client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCreate'
+      responses:
+        '201':
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeClient'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /clients/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Clients]
+      summary: Get client by ID
+      responses:
+        '200':
+          description: Client found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeClient'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Clients]
+      summary: Update client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdate'
+      responses:
+        '200':
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeClient'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Clients]
+      summary: Delete client
+      responses:
+        '204':
+          description: Client deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # PROJECTS
+  # ─────────────────────────────────────────────────────────
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      description: Retrieve a paginated, filterable, sortable list of projects.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, on_hold, completed, archived]
+        - name: client_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProjects'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Projects]
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProject'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Projects]
+      summary: Get project by ID
+      responses:
+        '200':
+          description: Project found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProject'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Projects]
+      summary: Update project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdate'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProject'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Projects]
+      summary: Delete project
+      responses:
+        '204':
+          description: Project deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{id}/buildings:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Projects, Buildings]
+      summary: List buildings in a project
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: List of buildings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBuildings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{id}/requirements:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Projects, Requirements]
+      summary: List requirements for a project
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: List of requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRequirements'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{id}/experiences:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Projects, Experiences]
+      summary: List experiences for a project
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: List of experiences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExperiences'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{id}/documents:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Projects, Documents]
+      summary: List documents for a project
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDocuments'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # BUILDINGS
+  # ─────────────────────────────────────────────────────────
+  /buildings:
+    get:
+      tags: [Buildings]
+      summary: List buildings
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: building_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/BuildingType'
+      responses:
+        '200':
+          description: List of buildings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBuildings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Buildings]
+      summary: Create building
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildingCreate'
+      responses:
+        '201':
+          description: Building created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeBuilding'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /buildings/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Buildings]
+      summary: Get building by ID
+      responses:
+        '200':
+          description: Building found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeBuilding'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Buildings]
+      summary: Update building
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildingUpdate'
+      responses:
+        '200':
+          description: Building updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeBuilding'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Buildings]
+      summary: Delete building
+      responses:
+        '204':
+          description: Building deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /buildings/{id}/floors:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Buildings, Floors]
+      summary: List floors in a building
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: List of floors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFloors'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # FLOORS
+  # ─────────────────────────────────────────────────────────
+  /floors:
+    get:
+      tags: [Floors]
+      summary: List floors
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: building_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of floors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFloors'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Floors]
+      summary: Create floor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FloorCreate'
+      responses:
+        '201':
+          description: Floor created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeFloor'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /floors/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Floors]
+      summary: Get floor by ID
+      responses:
+        '200':
+          description: Floor found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeFloor'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Floors]
+      summary: Update floor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FloorUpdate'
+      responses:
+        '200':
+          description: Floor updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeFloor'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Floors]
+      summary: Delete floor
+      responses:
+        '204':
+          description: Floor deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /floors/{id}/rooms:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Floors, Rooms]
+      summary: List rooms on a floor
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: List of rooms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRooms'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # ROOMS
+  # ─────────────────────────────────────────────────────────
+  /rooms:
+    get:
+      tags: [Rooms]
+      summary: List rooms
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: floor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of rooms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRooms'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Rooms]
+      summary: Create room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+      responses:
+        '201':
+          description: Room created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Rooms]
+      summary: Get room by ID
+      responses:
+        '200':
+          description: Room found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeRoom'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Rooms]
+      summary: Update room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomUpdate'
+      responses:
+        '200':
+          description: Room updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Rooms]
+      summary: Delete room
+      responses:
+        '204':
+          description: Room deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # REQUIREMENTS
+  # ─────────────────────────────────────────────────────────
+  /requirements:
+    get:
+      tags: [Requirements]
+      summary: List requirements
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/RequirementCategory'
+        - name: detection_state
+          in: query
+          schema:
+            $ref: '#/components/schemas/DetectionState'
+      responses:
+        '200':
+          description: List of requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRequirements'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Requirements]
+      summary: Create requirement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequirementCreate'
+      responses:
+        '201':
+          description: Requirement created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeRequirement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /requirements/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Requirements]
+      summary: Get requirement by ID
+      responses:
+        '200':
+          description: Requirement found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeRequirement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Requirements]
+      summary: Update requirement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequirementUpdate'
+      responses:
+        '200':
+          description: Requirement updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeRequirement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Requirements]
+      summary: Delete requirement
+      responses:
+        '204':
+          description: Requirement deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # EXPERIENCES
+  # ─────────────────────────────────────────────────────────
+  /experiences:
+    get:
+      tags: [Experiences]
+      summary: List experiences
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of experiences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExperiences'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Experiences]
+      summary: Create experience
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperienceCreate'
+      responses:
+        '201':
+          description: Experience created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeExperience'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /experiences/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Experiences]
+      summary: Get experience by ID
+      responses:
+        '200':
+          description: Experience found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeExperience'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Experiences]
+      summary: Update experience
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperienceUpdate'
+      responses:
+        '200':
+          description: Experience updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeExperience'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Experiences]
+      summary: Delete experience
+      responses:
+        '204':
+          description: Experience deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # SYSTEMS
+  # ─────────────────────────────────────────────────────────
+  /systems:
+    get:
+      tags: [Systems]
+      summary: List systems
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/SystemCategory'
+      responses:
+        '200':
+          description: List of systems
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSystems'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Systems]
+      summary: Create system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemCreate'
+      responses:
+        '201':
+          description: System created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSystem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /systems/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Systems]
+      summary: Get system by ID
+      responses:
+        '200':
+          description: System found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSystem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Systems]
+      summary: Update system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemUpdate'
+      responses:
+        '200':
+          description: System updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSystem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Systems]
+      summary: Delete system
+      responses:
+        '204':
+          description: System deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /systems/{id}/subsystems:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Systems, Subsystems]
+      summary: List subsystems of a system
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: List of subsystems
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSubsystems'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # SUBSYSTEMS
+  # ─────────────────────────────────────────────────────────
+  /subsystems:
+    get:
+      tags: [Subsystems]
+      summary: List subsystems
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: system_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of subsystems
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSubsystems'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Subsystems]
+      summary: Create subsystem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubsystemCreate'
+      responses:
+        '201':
+          description: Subsystem created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSubsystem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /subsystems/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Subsystems]
+      summary: Get subsystem by ID
+      responses:
+        '200':
+          description: Subsystem found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSubsystem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Subsystems]
+      summary: Update subsystem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubsystemUpdate'
+      responses:
+        '200':
+          description: Subsystem updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSubsystem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Subsystems]
+      summary: Delete subsystem
+      responses:
+        '204':
+          description: Subsystem deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # EQUIPMENT
+  # ─────────────────────────────────────────────────────────
+  /equipment:
+    get:
+      tags: [Equipment]
+      summary: List equipment instances
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: room_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: subsystem_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of equipment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEquipment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Equipment]
+      summary: Create equipment instance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentCreate'
+      responses:
+        '201':
+          description: Equipment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEquipment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /equipment/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Equipment]
+      summary: Get equipment by ID
+      responses:
+        '200':
+          description: Equipment found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEquipment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Equipment]
+      summary: Update equipment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentUpdate'
+      responses:
+        '200':
+          description: Equipment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEquipment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Equipment]
+      summary: Delete equipment
+      responses:
+        '204':
+          description: Equipment deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # EQUIPMENT LIBRARY
+  # ─────────────────────────────────────────────────────────
+  /equipment-library:
+    get:
+      tags: [Equipment Library]
+      summary: Browse equipment library
+      description: Search and filter the master equipment catalog.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: manufacturer
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Full-text search across name, description, and tags
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Equipment library entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEquipmentLibrary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Equipment Library]
+      summary: Add equipment to library
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentLibraryCreate'
+      responses:
+        '201':
+          description: Equipment added to library
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEquipmentLibrary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /equipment-library/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Equipment Library]
+      summary: Get library equipment by ID
+      responses:
+        '200':
+          description: Library equipment found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEquipmentLibrary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Equipment Library]
+      summary: Update library equipment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentLibraryUpdate'
+      responses:
+        '200':
+          description: Library equipment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEquipmentLibrary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Equipment Library]
+      summary: Remove from library
+      responses:
+        '204':
+          description: Library equipment removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /equipment-library/{id}/alternatives:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Equipment Library]
+      summary: Get alternative equipment options
+      description: Retrieve functionally equivalent equipment alternatives for value engineering.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Alternative equipment options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEquipmentLibrary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # ENGINEERING ENGINE
+  # ─────────────────────────────────────────────────────────
+  /engine/evaluate:
+    post:
+      tags: [Engineering Engine]
+      summary: Evaluate a project
+      description: Run the engineering evaluation engine against a project to generate recommendations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineEvaluateRequest'
+      responses:
+        '200':
+          description: Evaluation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEngineEvaluation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /engine/prescribe:
+    post:
+      tags: [Engineering Engine]
+      summary: Generate prescription
+      description: Generate a technical prescription based on evaluation results.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnginePrescribeRequest'
+      responses:
+        '200':
+          description: Prescription generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrescription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /engine/zones:
+    post:
+      tags: [Engineering Engine]
+      summary: Generate technical zones
+      description: Generate technical zone recommendations for a building or project.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineZonesRequest'
+      responses:
+        '200':
+          description: Zone recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeTechnicalZones'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /engine/rules:
+    get:
+      tags: [Engineering Engine]
+      summary: List engineering rules
+      description: Retrieve all active engineering rules used by the evaluation engine.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+      responses:
+        '200':
+          description: List of engineering rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEngineeringRules'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /engine/rules/{id}/test:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Engineering Engine]
+      summary: Test an engineering rule
+      description: Run a specific engineering rule against test input data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineRuleTestRequest'
+      responses:
+        '200':
+          description: Rule test results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEngineRuleTestResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # PRESCRIPTIONS
+  # ─────────────────────────────────────────────────────────
+  /prescriptions:
+    get:
+      tags: [Prescriptions]
+      summary: List prescriptions
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, pending_approval, approved, rejected, superseded, implemented]
+      responses:
+        '200':
+          description: List of prescriptions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPrescriptions'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Prescriptions]
+      summary: Create prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrescriptionCreate'
+      responses:
+        '201':
+          description: Prescription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrescription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /prescriptions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Prescriptions]
+      summary: Get prescription by ID
+      responses:
+        '200':
+          description: Prescription found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrescription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Prescriptions]
+      summary: Update prescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrescriptionUpdate'
+      responses:
+        '200':
+          description: Prescription updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrescription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Prescriptions]
+      summary: Delete prescription
+      responses:
+        '204':
+          description: Prescription deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /prescriptions/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    post:
+      tags: [Prescriptions]
+      summary: Approve prescription
+      description: Approve a prescription, optionally with comments.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrescriptionApprovalRequest'
+      responses:
+        '200':
+          description: Prescription approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrescription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /prescriptions/{id}/reject:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    post:
+      tags: [Prescriptions]
+      summary: Reject prescription
+      description: Reject a prescription with a reason.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrescriptionRejectionRequest'
+      responses:
+        '200':
+          description: Prescription rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrescription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /prescriptions/{id}/supersede:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    post:
+      tags: [Prescriptions]
+      summary: Supersede prescription
+      description: Mark a prescription as superseded by a newer version.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrescriptionSupersedeRequest'
+      responses:
+        '200':
+          description: Prescription superseded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrescription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /prescriptions/{id}/export:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Prescriptions]
+      summary: Export prescription
+      description: Export a prescription in the specified format.
+      parameters:
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pdf, docx, json, markdown]
+        - name: include_explanations
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Exported prescription
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrescription'
+            text/markdown:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # TECHNICAL ZONES
+  # ─────────────────────────────────────────────────────────
+  /technical-zones:
+    get:
+      tags: [Technical Zones]
+      summary: List technical zones
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: building_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of technical zones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTechnicalZones'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Technical Zones]
+      summary: Create technical zone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TechnicalZoneCreate'
+      responses:
+        '201':
+          description: Technical zone created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeTechnicalZone'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /technical-zones/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Technical Zones]
+      summary: Get technical zone by ID
+      responses:
+        '200':
+          description: Technical zone found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeTechnicalZone'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Technical Zones]
+      summary: Update technical zone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TechnicalZoneUpdate'
+      responses:
+        '200':
+          description: Technical zone updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeTechnicalZone'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Technical Zones]
+      summary: Delete technical zone
+      responses:
+        '204':
+          description: Technical zone deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # PROCUREMENT / VALUE ENGINEERING
+  # ─────────────────────────────────────────────────────────
+  /value-engineer:
+    post:
+      tags: [Procurement]
+      summary: Run value engineering analysis
+      description: Analyze a set of equipment or a project for cost optimization opportunities.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueEngineerRequest'
+      responses:
+        '200':
+          description: Value engineering results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeValueEngineerResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # SUPPLIERS
+  # ─────────────────────────────────────────────────────────
+  /suppliers:
+    get:
+      tags: [Suppliers]
+      summary: List suppliers
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: is_certified
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of suppliers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSuppliers'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Suppliers]
+      summary: Create supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierCreate'
+      responses:
+        '201':
+          description: Supplier created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSupplier'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /suppliers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Suppliers]
+      summary: Get supplier by ID
+      responses:
+        '200':
+          description: Supplier found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSupplier'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Suppliers]
+      summary: Update supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierUpdate'
+      responses:
+        '200':
+          description: Supplier updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeSupplier'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Suppliers]
+      summary: Delete supplier
+      responses:
+        '204':
+          description: Supplier deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # DOCUMENTS
+  # ─────────────────────────────────────────────────────────
+  /documents/generate/{type}:
+    parameters:
+      - name: type
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [proposal, specification, report, bom, contract, prescription_summary, project_summary]
+    post:
+      tags: [Documents]
+      summary: Generate document
+      description: Generate a document of the specified type from project data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentGenerateRequest'
+      responses:
+        '200':
+          description: Document generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeDocument'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # INTEGRATIONS
+  # ─────────────────────────────────────────────────────────
+  /integrations:
+    get:
+      tags: [Integrations]
+      summary: List integrations
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, configured, testing, active, error, disabled]
+      responses:
+        '200':
+          description: List of integrations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedIntegrations'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Integrations]
+      summary: Create integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreate'
+      responses:
+        '201':
+          description: Integration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeIntegration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /integrations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Integrations]
+      summary: Get integration by ID
+      responses:
+        '200':
+          description: Integration found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeIntegration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Integrations]
+      summary: Update integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationUpdate'
+      responses:
+        '200':
+          description: Integration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeIntegration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Integrations]
+      summary: Delete integration
+      responses:
+        '204':
+          description: Integration deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /integrations/{id}/test:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    post:
+      tags: [Integrations]
+      summary: Test integration
+      description: Test the connectivity and configuration of an integration.
+      responses:
+        '200':
+          description: Test results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeIntegrationTestResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /integrations/{id}/sync:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    post:
+      tags: [Integrations]
+      summary: Trigger integration sync
+      description: Manually trigger a data sync for the integration.
+      responses:
+        '202':
+          description: Sync initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeIntegrationSyncStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # AI SERVICES
+  # ─────────────────────────────────────────────────────────
+  /ai/nlp/parse:
+    post:
+      tags: [AI Services]
+      summary: NLP parse
+      description: Parse natural language input into structured engineering requirements or commands.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NlpParseRequest'
+      responses:
+        '200':
+          description: Parsed intent and entities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeNlpParseResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ai/voice/transcribe:
+    post:
+      tags: [AI Services]
+      summary: Voice transcribe
+      description: Transcribe audio to text. Accepts audio file upload or WebSocket stream.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VoiceTranscribeRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoiceTranscribeUrlRequest'
+      responses:
+        '200':
+          description: Transcription result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeVoiceTranscribeResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ai/voice/synthesize:
+    post:
+      tags: [AI Services]
+      summary: Voice synthesize
+      description: Synthesize text into speech audio.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoiceSynthesizeRequest'
+      responses:
+        '200':
+          description: Synthesized audio
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+            audio/wav:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeVoiceSynthesizeResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ai/predict:
+    post:
+      tags: [AI Services]
+      summary: AI prediction
+      description: Get AI-driven predictions for a given context (e.g., cost estimation, system recommendations).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiPredictionRequest'
+      responses:
+        '200':
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiPredictionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # AI LOCAL SERVERS
+  # ─────────────────────────────────────────────────────────
+  /ai-local-servers:
+    get:
+      tags: [AI Local Servers]
+      summary: List AI local servers
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+      responses:
+        '200':
+          description: List of AI local servers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAiLocalServers'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [AI Local Servers]
+      summary: Register AI local server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiLocalServerCreate'
+      responses:
+        '201':
+          description: AI local server registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiLocalServer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ai-local-servers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [AI Local Servers]
+      summary: Get AI local server by ID
+      responses:
+        '200':
+          description: AI local server found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiLocalServer'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [AI Local Servers]
+      summary: Update AI local server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiLocalServerUpdate'
+      responses:
+        '200':
+          description: AI local server updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiLocalServer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [AI Local Servers]
+      summary: Deregister AI local server
+      responses:
+        '204':
+          description: AI local server deregistered
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ai-local-servers/{id}/health:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [AI Local Servers]
+      summary: Check AI local server health
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiLocalServerHealth'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # AI LEARNED PATTERNS
+  # ─────────────────────────────────────────────────────────
+  /ai-patterns:
+    get:
+      tags: [AI Patterns]
+      summary: List learned patterns
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: domain
+          in: query
+          schema:
+            type: string
+        - name: is_validated
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of learned patterns
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAiLearnedPatterns'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [AI Patterns]
+      summary: Create pattern (manual entry or seed)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiLearnedPatternCreate'
+      responses:
+        '201':
+          description: Pattern created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiLearnedPattern'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ai-patterns/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [AI Patterns]
+      summary: Get pattern by ID
+      responses:
+        '200':
+          description: Pattern found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiLearnedPattern'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [AI Patterns]
+      summary: Update pattern
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiLearnedPatternUpdate'
+      responses:
+        '200':
+          description: Pattern updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiLearnedPattern'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [AI Patterns]
+      summary: Delete pattern
+      responses:
+        '204':
+          description: Pattern deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ai-patterns/{id}/validate:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    post:
+      tags: [AI Patterns]
+      summary: Validate pattern
+      description: Mark a learned pattern as validated by a domain expert.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiPatternValidateRequest'
+      responses:
+        '200':
+          description: Pattern validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAiLearnedPattern'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # EXPLANATION LOGS
+  # ─────────────────────────────────────────────────────────
+  /explanation-logs:
+    get:
+      tags: [Explanation Logs]
+      summary: List explanation logs
+      description: Retrieve AI decision explanations for auditing and transparency.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+        - name: entity_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of explanation logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExplanationLogs'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /explanation-logs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Explanation Logs]
+      summary: Get explanation log by ID
+      responses:
+        '200':
+          description: Explanation log found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeExplanationLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # DOMAIN EVENTS
+  # ─────────────────────────────────────────────────────────
+  /domain-events:
+    get:
+      tags: [Domain Events]
+      summary: List domain events
+      description: Retrieve the event audit log.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: event_type
+          in: query
+          schema:
+            type: string
+        - name: aggregate_type
+          in: query
+          schema:
+            type: string
+        - name: aggregate_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: List of domain events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDomainEvents'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /domain-events/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Domain Events]
+      summary: Get domain event by ID
+      responses:
+        '200':
+          description: Domain event found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeDomainEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # PRIVACY MATRIX
+  # ─────────────────────────────────────────────────────────
+  /privacy-matrix:
+    get:
+      tags: [Privacy Matrix]
+      summary: List privacy matrix entries
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+      responses:
+        '200':
+          description: List of privacy matrix entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPrivacyMatrix'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Privacy Matrix]
+      summary: Create privacy matrix entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivacyMatrixCreate'
+      responses:
+        '201':
+          description: Privacy matrix entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrivacyMatrix'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /privacy-matrix/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Privacy Matrix]
+      summary: Get privacy matrix entry by ID
+      responses:
+        '200':
+          description: Privacy matrix entry found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrivacyMatrix'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Privacy Matrix]
+      summary: Update privacy matrix entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivacyMatrixUpdate'
+      responses:
+        '200':
+          description: Privacy matrix entry updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopePrivacyMatrix'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Privacy Matrix]
+      summary: Delete privacy matrix entry
+      responses:
+        '204':
+          description: Privacy matrix entry deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # ENGINEERING RULES
+  # ─────────────────────────────────────────────────────────
+  /engineering-rules:
+    get:
+      tags: [Engineering Rules]
+      summary: List engineering rules
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: rule_type
+          in: query
+          schema:
+            type: string
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of engineering rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEngineeringRules'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Engineering Rules]
+      summary: Create engineering rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineeringRuleCreate'
+      responses:
+        '201':
+          description: Engineering rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEngineeringRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /engineering-rules/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Engineering Rules]
+      summary: Get engineering rule by ID
+      responses:
+        '200':
+          description: Engineering rule found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEngineeringRule'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Engineering Rules]
+      summary: Update engineering rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineeringRuleUpdate'
+      responses:
+        '200':
+          description: Engineering rule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeEngineeringRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Engineering Rules]
+      summary: Delete engineering rule
+      responses:
+        '204':
+          description: Engineering rule deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # PROPOSALS
+  # ─────────────────────────────────────────────────────────
+  /proposals:
+    get:
+      tags: [Proposals]
+      summary: List proposals
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, sent, accepted, rejected, negotiating, expired]
+      responses:
+        '200':
+          description: List of proposals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProposals'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Proposals]
+      summary: Create proposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalCreate'
+      responses:
+        '201':
+          description: Proposal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProposal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /proposals/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDPathParam'
+    get:
+      tags: [Proposals]
+      summary: Get proposal by ID
+      responses:
+        '200':
+          description: Proposal found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProposal'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Proposals]
+      summary: Update proposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalUpdate'
+      responses:
+        '200':
+          description: Proposal updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeProposal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Proposals]
+      summary: Delete proposal
+      responses:
+        '204':
+          description: Proposal deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────────────────
+  # WEBSOCKET
+  # ─────────────────────────────────────────────────────────
+  /ws/voice:
+    get:
+      tags: [WebSocket]
+      summary: Voice streaming WebSocket
+      description: |
+        Upgrade to a WebSocket connection for real-time voice streaming.
+        Supports bidirectional audio streaming for transcription and synthesis.
+      parameters:
+        - name: mode
+          in: query
+          required: true
+          description: Voice session mode
+          schema:
+            type: string
+            enum: [transcribe, synthesize, duplex]
+        - name: language
+          in: query
+          schema:
+            type: string
+            default: en
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [pcm, mp3, ogg]
+            default: pcm
+      responses:
+        '101':
+          description: WebSocket upgrade accepted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from /auth/login
+
+  parameters:
+    UUIDPathParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique resource identifier
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number for pagination
+
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page
+
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+        example: created_at:desc
+      description: Sort field and direction (field:asc or field:desc)
+
+    FilterParam:
+      name: filter
+      in: query
+      schema:
+        type: string
+      description: JSON-encoded filter object
+
+  schemas:
+    # ───────────────────────────────────────────────
+    # ENUMS
+    # ───────────────────────────────────────────────
+    BuildingType:
+      type: string
+      enum:
+        - residential
+        - commercial
+        - industrial
+        - mixed_use
+        - healthcare
+        - education
+        - hospitality
+        - data_center
+        - retail
+        - office
+
+    SolutionLevel:
+      type: string
+      enum:
+        - basic
+        - standard
+        - premium
+        - custom
+
+    DetectionState:
+      type: string
+      enum:
+        - detected
+        - inferred
+        - validated
+        - rejected
+        - pending
+
+    RequirementCategory:
+      type: string
+      enum:
+        - functional
+        - technical
+        - regulatory
+        - sustainability
+        - accessibility
+        - security
+        - safety
+        - comfort
+        - operational
+        - aesthetic
+
+    SystemCategory:
+      type: string
+      enum:
+        - hvac
+        - electrical
+        - plumbing
+        - fire_safety
+        - security
+        - it_network
+        - lighting
+        - elevator
+        - bms
+        - renewable_energy
+        - av
+        - structural
+
+    # ───────────────────────────────────────────────
+    # STANDARD ENVELOPE
+    # ───────────────────────────────────────────────
+    Meta:
+      type: object
+      required: [version, request_id, timestamp]
+      properties:
+        version:
+          type: string
+          example: "1.0"
+        request_id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        timestamp:
+          type: string
+          format: date-time
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.94
+        needs_validation:
+          type: boolean
+          default: false
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            total_pages:
+              type: integer
+            has_next:
+              type: boolean
+            has_prev:
+              type: boolean
+
+    Links:
+      type: object
+      required: [self]
+      properties:
+        self:
+          type: string
+          format: uri
+        related:
+          type: object
+          additionalProperties:
+            type: string
+            format: uri
+
+    Envelope:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: object
+        meta:
+          $ref: '#/components/schemas/Meta'
+        links:
+          $ref: '#/components/schemas/Links'
+
+    # ───────────────────────────────────────────────
+    # ERROR SCHEMAS
+    # ───────────────────────────────────────────────
+    ErrorDetail:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+        details:
+          type: object
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+
+    # ───────────────────────────────────────────────
+    # AUTH SCHEMAS
+    # ───────────────────────────────────────────────
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 6
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    # ───────────────────────────────────────────────
+    # PROFILE SCHEMAS
+    # ───────────────────────────────────────────────
+    Profile:
+      type: object
+      required: [id, email, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        role:
+          type: string
+          enum: [admin, engineer, project_manager, client, viewer]
+        organization_id:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProfileUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        metadata:
+          type: object
+
+    EnvelopeProfile:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Profile'
+
+    PaginatedProfiles:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Profile'
+
+    # ───────────────────────────────────────────────
+    # CLIENT SCHEMAS
+    # ───────────────────────────────────────────────
+    Client:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        tax_id:
+          type: string
+        industry:
+          type: string
+        contact_person:
+          type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ClientCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        tax_id:
+          type: string
+        industry:
+          type: string
+        contact_person:
+          type: string
+        metadata:
+          type: object
+
+    ClientUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        tax_id:
+          type: string
+        industry:
+          type: string
+        contact_person:
+          type: string
+        metadata:
+          type: object
+
+    EnvelopeClient:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Client'
+
+    PaginatedClients:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Client'
+
+    # ───────────────────────────────────────────────
+    # PROJECT SCHEMAS
+    # ───────────────────────────────────────────────
+    Project:
+      type: object
+      required: [id, name, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        client_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, active, on_hold, completed, archived]
+        building_type:
+          $ref: '#/components/schemas/BuildingType'
+        solution_level:
+          $ref: '#/components/schemas/SolutionLevel'
+        location:
+          type: string
+        start_date:
+          type: string
+          format: date
+        target_end_date:
+          type: string
+          format: date
+        budget_estimate:
+          type: number
+        currency:
+          type: string
+          default: EUR
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+
+    ProjectCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        client_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, active, on_hold, completed, archived]
+          default: draft
+        building_type:
+          $ref: '#/components/schemas/BuildingType'
+        solution_level:
+          $ref: '#/components/schemas/SolutionLevel'
+        location:
+          type: string
+        start_date:
+          type: string
+          format: date
+        target_end_date:
+          type: string
+          format: date
+        budget_estimate:
+          type: number
+        currency:
+          type: string
+          default: EUR
+        metadata:
+          type: object
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        client_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, active, on_hold, completed, archived]
+        building_type:
+          $ref: '#/components/schemas/BuildingType'
+        solution_level:
+          $ref: '#/components/schemas/SolutionLevel'
+        location:
+          type: string
+        start_date:
+          type: string
+          format: date
+        target_end_date:
+          type: string
+          format: date
+        budget_estimate:
+          type: number
+        currency:
+          type: string
+        metadata:
+          type: object
+
+    EnvelopeProject:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Project'
+
+    PaginatedProjects:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Project'
+
+    # ───────────────────────────────────────────────
+    # BUILDING SCHEMAS
+    # ───────────────────────────────────────────────
+    Building:
+      type: object
+      required: [id, project_id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        building_type:
+          $ref: '#/components/schemas/BuildingType'
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        total_floors:
+          type: integer
+        total_area_sqm:
+          type: number
+        year_built:
+          type: integer
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BuildingCreate:
+      type: object
+      required: [project_id, name]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        building_type:
+          $ref: '#/components/schemas/BuildingType'
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        total_floors:
+          type: integer
+        total_area_sqm:
+          type: number
+        year_built:
+          type: integer
+        metadata:
+          type: object
+
+    BuildingUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        building_type:
+          $ref: '#/components/schemas/BuildingType'
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        total_floors:
+          type: integer
+        total_area_sqm:
+          type: number
+        year_built:
+          type: integer
+        metadata:
+          type: object
+
+    EnvelopeBuilding:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Building'
+
+    PaginatedBuildings:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Building'
+
+    # ───────────────────────────────────────────────
+    # FLOOR SCHEMAS
+    # ───────────────────────────────────────────────
+    Floor:
+      type: object
+      required: [id, building_id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        building_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        level:
+          type: integer
+        description:
+          type: string
+        area_sqm:
+          type: number
+        height_m:
+          type: number
+        usage_type:
+          type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FloorCreate:
+      type: object
+      required: [building_id, name]
+      properties:
+        building_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        level:
+          type: integer
+        description:
+          type: string
+        area_sqm:
+          type: number
+        height_m:
+          type: number
+        usage_type:
+          type: string
+        metadata:
+          type: object
+
+    FloorUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        level:
+          type: integer
+        description:
+          type: string
+        area_sqm:
+          type: number
+        height_m:
+          type: number
+        usage_type:
+          type: string
+        metadata:
+          type: object
+
+    EnvelopeFloor:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Floor'
+
+    PaginatedFloors:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Floor'
+
+    # ───────────────────────────────────────────────
+    # ROOM SCHEMAS
+    # ───────────────────────────────────────────────
+    Room:
+      type: object
+      required: [id, floor_id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        floor_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        area_sqm:
+          type: number
+        room_type:
+          type: string
+        occupancy:
+          type: integer
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RoomCreate:
+      type: object
+      required: [floor_id, name]
+      properties:
+        floor_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        area_sqm:
+          type: number
+        room_type:
+          type: string
+        occupancy:
+          type: integer
+        metadata:
+          type: object
+
+    RoomUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        area_sqm:
+          type: number
+        room_type:
+          type: string
+        occupancy:
+          type: integer
+        metadata:
+          type: object
+
+    EnvelopeRoom:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Room'
+
+    PaginatedRooms:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Room'
+
+    # ───────────────────────────────────────────────
+    # REQUIREMENT SCHEMAS
+    # ───────────────────────────────────────────────
+    Requirement:
+      type: object
+      required: [id, project_id, title, category, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/RequirementCategory'
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        detection_state:
+          $ref: '#/components/schemas/DetectionState'
+        detected_by:
+          type: string
+          enum: [user, ai, import, rule_engine]
+        source_text:
+          type: string
+        related_system_id:
+          type: string
+          format: uuid
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RequirementCreate:
+      type: object
+      required: [project_id, title, category]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/RequirementCategory'
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        detection_state:
+          $ref: '#/components/schemas/DetectionState'
+        detected_by:
+          type: string
+          enum: [user, ai, import, rule_engine]
+        source_text:
+          type: string
+        related_system_id:
+          type: string
+          format: uuid
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+
+    RequirementUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/RequirementCategory'
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        detection_state:
+          $ref: '#/components/schemas/DetectionState'
+        source_text:
+          type: string
+        related_system_id:
+          type: string
+          format: uuid
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+
+    EnvelopeRequirement:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Requirement'
+
+    PaginatedRequirements:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Requirement'
+
+    # ───────────────────────────────────────────────
+    # EXPERIENCE SCHEMAS
+    # ───────────────────────────────────────────────
+    Experience:
+      type: object
+      required: [id, project_id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        experience_type:
+          type: string
+          enum: [comfort, productivity, wellness, safety, entertainment, sustainability]
+        target_metrics:
+          type: object
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ExperienceCreate:
+      type: object
+      required: [project_id, name]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        experience_type:
+          type: string
+          enum: [comfort, productivity, wellness, safety, entertainment, sustainability]
+        target_metrics:
+          type: object
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+
+    ExperienceUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        experience_type:
+          type: string
+          enum: [comfort, productivity, wellness, safety, entertainment, sustainability]
+        target_metrics:
+          type: object
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+
+    EnvelopeExperience:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Experience'
+
+    PaginatedExperiences:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Experience'
+
+    # ───────────────────────────────────────────────
+    # SYSTEM SCHEMAS
+    # ───────────────────────────────────────────────
+    System:
+      type: object
+      required: [id, project_id, name, category, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/SystemCategory'
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [planned, designed, procured, installed, commissioned, operational]
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SystemCreate:
+      type: object
+      required: [project_id, name, category]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/SystemCategory'
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [planned, designed, procured, installed, commissioned, operational]
+        metadata:
+          type: object
+
+    SystemUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/SystemCategory'
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [planned, designed, procured, installed, commissioned, operational]
+        metadata:
+          type: object
+
+    EnvelopeSystem:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/System'
+
+    PaginatedSystems:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/System'
+
+    # ───────────────────────────────────────────────
+    # SUBSYSTEM SCHEMAS
+    # ───────────────────────────────────────────────
+    Subsystem:
+      type: object
+      required: [id, system_id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        system_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        function:
+          type: string
+        status:
+          type: string
+          enum: [planned, designed, procured, installed, commissioned, operational]
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SubsystemCreate:
+      type: object
+      required: [system_id, name]
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        function:
+          type: string
+        status:
+          type: string
+          enum: [planned, designed, procured, installed, commissioned, operational]
+        metadata:
+          type: object
+
+    SubsystemUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        function:
+          type: string
+        status:
+          type: string
+          enum: [planned, designed, procured, installed, commissioned, operational]
+        metadata:
+          type: object
+
+    EnvelopeSubsystem:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Subsystem'
+
+    PaginatedSubsystems:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Subsystem'
+
+    # ───────────────────────────────────────────────
+    # EQUIPMENT SCHEMAS
+    # ───────────────────────────────────────────────
+    Equipment:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        room_id:
+          type: string
+          format: uuid
+        subsystem_id:
+          type: string
+          format: uuid
+        library_reference_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          default: 1
+        status:
+          type: string
+          enum: [specified, approved, ordered, delivered, installed, commissioned]
+        specifications:
+          type: object
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EquipmentCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        room_id:
+          type: string
+          format: uuid
+        subsystem_id:
+          type: string
+          format: uuid
+        library_reference_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          default: 1
+        status:
+          type: string
+          enum: [specified, approved, ordered, delivered, installed, commissioned]
+        specifications:
+          type: object
+        metadata:
+          type: object
+
+    EquipmentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        room_id:
+          type: string
+          format: uuid
+        subsystem_id:
+          type: string
+          format: uuid
+        library_reference_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        status:
+          type: string
+          enum: [specified, approved, ordered, delivered, installed, commissioned]
+        specifications:
+          type: object
+        metadata:
+          type: object
+
+    EnvelopeEquipment:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Equipment'
+
+    PaginatedEquipment:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Equipment'
+
+    # ───────────────────────────────────────────────
+    # EQUIPMENT LIBRARY SCHEMAS
+    # ───────────────────────────────────────────────
+    EquipmentLibrary:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        manufacturer:
+          type: string
+        model_number:
+          type: string
+        datasheet_url:
+          type: string
+          format: uri
+        specifications:
+          type: object
+        certifications:
+          type: array
+          items:
+            type: string
+        estimated_price:
+          type: number
+        currency:
+          type: string
+          default: EUR
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EquipmentLibraryCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        manufacturer:
+          type: string
+        model_number:
+          type: string
+        datasheet_url:
+          type: string
+          format: uri
+        specifications:
+          type: object
+        certifications:
+          type: array
+          items:
+            type: string
+        estimated_price:
+          type: number
+        currency:
+          type: string
+          default: EUR
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+
+    EquipmentLibraryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        manufacturer:
+          type: string
+        model_number:
+          type: string
+        datasheet_url:
+          type: string
+          format: uri
+        specifications:
+          type: object
+        certifications:
+          type: array
+          items:
+            type: string
+        estimated_price:
+          type: number
+        currency:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+
+    EnvelopeEquipmentLibrary:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/EquipmentLibrary'
+
+    PaginatedEquipmentLibrary:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/EquipmentLibrary'
+
+    # ───────────────────────────────────────────────
+    # ENGINE SCHEMAS
+    # ───────────────────────────────────────────────
+    EngineEvaluateRequest:
+      type: object
+      required: [project_id]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        scope:
+          type: string
+          enum: [full, buildings, systems, requirements, cost]
+          default: full
+        options:
+          type: object
+          properties:
+            include_alternatives:
+              type: boolean
+              default: true
+            include_cost_estimates:
+              type: boolean
+              default: true
+            confidence_threshold:
+              type: number
+              minimum: 0
+              maximum: 1
+              default: 0.7
+
+    EngineEvaluationResult:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        evaluation_id:
+          type: string
+          format: uuid
+        scope:
+          type: string
+        summary:
+          type: string
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              severity:
+                type: string
+                enum: [info, warning, critical]
+              message:
+                type: string
+              recommendation:
+                type: string
+        system_recommendations:
+          type: array
+          items:
+            type: object
+        cost_estimate:
+          type: object
+          properties:
+            total_min:
+              type: number
+            total_max:
+              type: number
+            currency:
+              type: string
+        confidence:
+          type: number
+
+    EnvelopeEngineEvaluation:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/EngineEvaluationResult'
+
+    EnginePrescribeRequest:
+      type: object
+      required: [project_id]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        evaluation_id:
+          type: string
+          format: uuid
+        scope:
+          type: string
+          enum: [full, system, subsystem, room]
+          default: full
+        target_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    EngineZonesRequest:
+      type: object
+      required: [project_id]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        building_id:
+          type: string
+          format: uuid
+        zone_type:
+          type: string
+          enum: [hvac, electrical, safety, network, all]
+          default: all
+
+    TechnicalZone:
+      type: object
+      required: [id, project_id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        building_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        zone_type:
+          type: string
+        description:
+          type: string
+        floor_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        systems:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TechnicalZoneCreate:
+      type: object
+      required: [project_id, name]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        building_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        zone_type:
+          type: string
+        description:
+          type: string
+        floor_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        systems:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+
+    TechnicalZoneUpdate:
+      type: object
+      properties:
+        building_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        zone_type:
+          type: string
+        description:
+          type: string
+        floor_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        room_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        systems:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+
+    EnvelopeTechnicalZone:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/TechnicalZone'
+
+    EnvelopeTechnicalZones:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/TechnicalZone'
+
+    PaginatedTechnicalZones:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/TechnicalZone'
+
+    EngineeringRule:
+      type: object
+      required: [id, name, rule_type, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        rule_type:
+          type: string
+        condition:
+          type: object
+        action:
+          type: object
+        priority:
+          type: integer
+        is_active:
+          type: boolean
+          default: true
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EngineeringRuleCreate:
+      type: object
+      required: [name, rule_type]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        rule_type:
+          type: string
+        condition:
+          type: object
+        action:
+          type: object
+        priority:
+          type: integer
+        is_active:
+          type: boolean
+          default: true
+        metadata:
+          type: object
+
+    EngineeringRuleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        rule_type:
+          type: string
+        condition:
+          type: object
+        action:
+          type: object
+        priority:
+          type: integer
+        is_active:
+          type: boolean
+        metadata:
+          type: object
+
+    EnvelopeEngineeringRule:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/EngineeringRule'
+
+    PaginatedEngineeringRules:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/EngineeringRule'
+
+    EngineRuleTestRequest:
+      type: object
+      required: [test_input]
+      properties:
+        test_input:
+          type: object
+        expected_output:
+          type: object
+
+    EngineRuleTestResult:
+      type: object
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+        passed:
+          type: boolean
+        actual_output:
+          type: object
+        execution_time_ms:
+          type: integer
+        logs:
+          type: array
+          items:
+            type: string
+
+    EnvelopeEngineRuleTestResult:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/EngineRuleTestResult'
+
+    # ───────────────────────────────────────────────
+    # PRESCRIPTION SCHEMAS
+    # ───────────────────────────────────────────────
+    Prescription:
+      type: object
+      required: [id, project_id, title, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, pending_approval, approved, rejected, superseded, implemented]
+        prescribed_systems:
+          type: array
+          items:
+            type: object
+        equipment_recommendations:
+          type: array
+          items:
+            type: object
+        estimated_cost:
+          type: number
+        currency:
+          type: string
+          default: EUR
+        approved_by:
+          type: string
+          format: uuid
+        approved_at:
+          type: string
+          format: date-time
+        superseded_by:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PrescriptionCreate:
+      type: object
+      required: [project_id, title]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        prescribed_systems:
+          type: array
+          items:
+            type: object
+        equipment_recommendations:
+          type: array
+          items:
+            type: object
+        estimated_cost:
+          type: number
+        currency:
+          type: string
+          default: EUR
+        metadata:
+          type: object
+
+    PrescriptionUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        prescribed_systems:
+          type: array
+          items:
+            type: object
+        equipment_recommendations:
+          type: array
+          items:
+            type: object
+        estimated_cost:
+          type: number
+        currency:
+          type: string
+        metadata:
+          type: object
+
+    PrescriptionApprovalRequest:
+      type: object
+      properties:
+        comments:
+          type: string
+
+    PrescriptionRejectionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+    PrescriptionSupersedeRequest:
+      type: object
+      required: [new_prescription_id]
+      properties:
+        new_prescription_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+
+    EnvelopePrescription:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Prescription'
+
+    PaginatedPrescriptions:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Prescription'
+
+    # ───────────────────────────────────────────────
+    # PROCUREMENT / VALUE ENGINEERING SCHEMAS
+    # ───────────────────────────────────────────────
+    ValueEngineerRequest:
+      type: object
+      required: [scope_type]
+      properties:
+        scope_type:
+          type: string
+          enum: [project, equipment_list, system]
+        project_id:
+          type: string
+          format: uuid
+        equipment_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        system_id:
+          type: string
+          format: uuid
+        constraints:
+          type: object
+          properties:
+            max_budget:
+              type: number
+            required_certifications:
+              type: array
+              items:
+                type: string
+            preferred_manufacturers:
+              type: array
+              items:
+                type: string
+
+    ValueEngineerResult:
+      type: object
+      properties:
+        original_cost:
+          type: number
+        optimized_cost:
+          type: number
+        savings_pct:
+          type: number
+        currency:
+          type: string
+        alternatives:
+          type: array
+          items:
+            type: object
+            properties:
+              original_equipment_id:
+                type: string
+                format: uuid
+              alternative_library_id:
+                type: string
+                format: uuid
+              savings:
+                type: number
+              trade_offs:
+                type: array
+                items:
+                  type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+
+    EnvelopeValueEngineerResult:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ValueEngineerResult'
+
+    Supplier:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        contact_email:
+          type: string
+          format: email
+        contact_phone:
+          type: string
+        address:
+          type: string
+        website:
+          type: string
+          format: uri
+        category:
+          type: string
+        is_certified:
+          type: boolean
+          default: false
+        certifications:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SupplierCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        contact_email:
+          type: string
+          format: email
+        contact_phone:
+          type: string
+        address:
+          type: string
+        website:
+          type: string
+          format: uri
+        category:
+          type: string
+        is_certified:
+          type: boolean
+        certifications:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+        metadata:
+          type: object
+
+    SupplierUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        contact_email:
+          type: string
+          format: email
+        contact_phone:
+          type: string
+        address:
+          type: string
+        website:
+          type: string
+          format: uri
+        category:
+          type: string
+        is_certified:
+          type: boolean
+        certifications:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+        metadata:
+          type: object
+
+    EnvelopeSupplier:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Supplier'
+
+    PaginatedSuppliers:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Supplier'
+
+    # ───────────────────────────────────────────────
+    # DOCUMENT SCHEMAS
+    # ───────────────────────────────────────────────
+    Document:
+      type: object
+      required: [id, type, project_id, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [proposal, specification, report, bom, contract, prescription_summary, project_summary]
+        project_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [generating, ready, error]
+        download_url:
+          type: string
+          format: uri
+        file_size:
+          type: integer
+        file_format:
+          type: string
+          enum: [pdf, docx, markdown, json]
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DocumentGenerateRequest:
+      type: object
+      required: [project_id]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        options:
+          type: object
+          properties:
+            include_costs:
+              type: boolean
+            include_alternatives:
+              type: boolean
+            language:
+              type: string
+              default: en
+        metadata:
+          type: object
+
+    EnvelopeDocument:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Document'
+
+    PaginatedDocuments:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Document'
+
+    # ───────────────────────────────────────────────
+    # INTEGRATION SCHEMAS
+    # ───────────────────────────────────────────────
+    Integration:
+      type: object
+      required: [id, name, integration_type, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        integration_type:
+          type: string
+          enum: [bim, cad, erp, crm, iot_platform, metering, cmms, analytics, custom]
+        provider:
+          type: string
+        status:
+          type: string
+          enum: [draft, configured, testing, active, error, disabled]
+        config:
+          type: object
+        credentials_encrypted:
+          type: string
+        last_sync_at:
+          type: string
+          format: date-time
+        last_error:
+          type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    IntegrationCreate:
+      type: object
+      required: [name, integration_type]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        integration_type:
+          type: string
+          enum: [bim, cad, erp, crm, iot_platform, metering, cmms, analytics, custom]
+        provider:
+          type: string
+        config:
+          type: object
+        credentials:
+          type: object
+        metadata:
+          type: object
+
+    IntegrationUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        integration_type:
+          type: string
+          enum: [bim, cad, erp, crm, iot_platform, metering, cmms, analytics, custom]
+        provider:
+          type: string
+        status:
+          type: string
+          enum: [draft, configured, testing, active, error, disabled]
+        config:
+          type: object
+        credentials:
+          type: object
+        metadata:
+          type: object
+
+    IntegrationTestResult:
+      type: object
+      properties:
+        integration_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        response_time_ms:
+          type: integer
+        tested_endpoints:
+          type: array
+          items:
+            type: object
+            properties:
+              endpoint:
+                type: string
+              success:
+                type: boolean
+              message:
+                type: string
+        error_message:
+          type: string
+
+    IntegrationSyncStatus:
+      type: object
+      properties:
+        integration_id:
+          type: string
+          format: uuid
+        sync_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+        started_at:
+          type: string
+          format: date-time
+
+    EnvelopeIntegration:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Integration'
+
+    EnvelopeIntegrationTestResult:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/IntegrationTestResult'
+
+    EnvelopeIntegrationSyncStatus:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/IntegrationSyncStatus'
+
+    PaginatedIntegrations:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Integration'
+
+    # ───────────────────────────────────────────────
+    # AI SERVICE SCHEMAS
+    # ───────────────────────────────────────────────
+    NlpParseRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+        context:
+          type: string
+          enum: [requirement, command, query, feedback]
+          default: requirement
+        project_id:
+          type: string
+          format: uuid
+
+    NlpParseResult:
+      type: object
+      properties:
+        intent:
+          type: string
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: string
+              start:
+                type: integer
+              end:
+                type: integer
+              confidence:
+                type: number
+        structured_requirement:
+          type: object
+        confidence:
+          type: number
+
+    EnvelopeNlpParseResult:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/NlpParseResult'
+
+    VoiceTranscribeRequest:
+      type: object
+      required: [audio]
+      properties:
+        audio:
+          type: string
+          format: binary
+        language:
+          type: string
+          default: en
+        model:
+          type: string
+          enum: [default, enhanced]
+          default: default
+
+    VoiceTranscribeUrlRequest:
+      type: object
+      required: [audio_url]
+      properties:
+        audio_url:
+          type: string
+          format: uri
+        language:
+          type: string
+          default: en
+
+    VoiceTranscribeResult:
+      type: object
+      properties:
+        text:
+          type: string
+        segments:
+          type: array
+          items:
+            type: object
+            properties:
+              start:
+                type: number
+              end:
+                type: number
+              text:
+                type: string
+              confidence:
+                type: number
+        language:
+          type: string
+        duration_seconds:
+          type: number
+
+    EnvelopeVoiceTranscribeResult:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/VoiceTranscribeResult'
+
+    VoiceSynthesizeRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+        voice:
+          type: string
+          default: default
+        language:
+          type: string
+          default: en
+        speed:
+          type: number
+          minimum: 0.5
+          maximum: 2.0
+          default: 1.0
+        format:
+          type: string
+          enum: [mp3, wav, ogg]
+          default: mp3
+
+    VoiceSynthesizeResult:
+      type: object
+      properties:
+        audio_url:
+          type: string
+          format: uri
+        duration_seconds:
+          type: number
+        format:
+          type: string
+
+    EnvelopeVoiceSynthesizeResult:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/VoiceSynthesizeResult'
+
+    AiPredictionRequest:
+      type: object
+      required: [prediction_type, context]
+      properties:
+        prediction_type:
+          type: string
+          enum: [cost_estimate, system_recommendation, maintenance_schedule, energy_consumption, occupancy_pattern]
+        context:
+          type: object
+        project_id:
+          type: string
+          format: uuid
+        building_id:
+          type: string
+          format: uuid
+
+    AiPredictionResult:
+      type: object
+      properties:
+        prediction_type:
+          type: string
+        result:
+          type: object
+        confidence:
+          type: number
+        model_version:
+          type: string
+        explanation:
+          type: string
+
+    EnvelopeAiPredictionResult:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AiPredictionResult'
+
+    # ───────────────────────────────────────────────
+    # AI LOCAL SERVER SCHEMAS
+    # ───────────────────────────────────────────────
+    AiLocalServer:
+      type: object
+      required: [id, name, endpoint_url, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        endpoint_url:
+          type: string
+          format: uri
+        location:
+          type: string
+        status:
+          type: string
+          enum: [online, offline, maintenance, error]
+        capabilities:
+          type: array
+          items:
+            type: string
+        last_heartbeat:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AiLocalServerCreate:
+      type: object
+      required: [name, endpoint_url]
+      properties:
+        name:
+          type: string
+        endpoint_url:
+          type: string
+          format: uri
+        location:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+
+    AiLocalServerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        endpoint_url:
+          type: string
+          format: uri
+        location:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+
+    AiLocalServerHealth:
+      type: object
+      properties:
+        server_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [online, offline, maintenance, error]
+        response_time_ms:
+          type: integer
+        last_heartbeat:
+          type: string
+          format: date-time
+        active_models:
+          type: array
+          items:
+            type: string
+        queue_depth:
+          type: integer
+
+    EnvelopeAiLocalServer:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AiLocalServer'
+
+    EnvelopeAiLocalServerHealth:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AiLocalServerHealth'
+
+    PaginatedAiLocalServers:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AiLocalServer'
+
+    # ───────────────────────────────────────────────
+    # AI LEARNED PATTERN SCHEMAS
+    # ───────────────────────────────────────────────
+    AiLearnedPattern:
+      type: object
+      required: [id, name, domain, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        domain:
+          type: string
+        pattern_data:
+          type: object
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        is_validated:
+          type: boolean
+          default: false
+        validated_by:
+          type: string
+          format: uuid
+        validated_at:
+          type: string
+          format: date-time
+        source_project_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AiLearnedPatternCreate:
+      type: object
+      required: [name, domain]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        domain:
+          type: string
+        pattern_data:
+          type: object
+        confidence_score:
+          type: number
+        source_project_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+
+    AiLearnedPatternUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        domain:
+          type: string
+        pattern_data:
+          type: object
+        confidence_score:
+          type: number
+        is_validated:
+          type: boolean
+        source_project_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+
+    AiPatternValidateRequest:
+      type: object
+      properties:
+        comments:
+          type: string
+
+    EnvelopeAiLearnedPattern:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AiLearnedPattern'
+
+    PaginatedAiLearnedPatterns:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AiLearnedPattern'
+
+    # ───────────────────────────────────────────────
+    # EXPLANATION LOG SCHEMAS
+    # ───────────────────────────────────────────────
+    ExplanationLog:
+      type: object
+      required: [id, entity_type, entity_id, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+          format: uuid
+        explanation:
+          type: string
+        model_version:
+          type: string
+        input_features:
+          type: object
+        confidence:
+          type: number
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    EnvelopeExplanationLog:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ExplanationLog'
+
+    PaginatedExplanationLogs:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExplanationLog'
+
+    # ───────────────────────────────────────────────
+    # DOMAIN EVENT SCHEMAS
+    # ───────────────────────────────────────────────
+    DomainEvent:
+      type: object
+      required: [id, event_type, aggregate_type, aggregate_id, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        aggregate_type:
+          type: string
+        aggregate_id:
+          type: string
+          format: uuid
+        payload:
+          type: object
+        user_id:
+          type: string
+          format: uuid
+        correlation_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    EnvelopeDomainEvent:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/DomainEvent'
+
+    PaginatedDomainEvents:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/DomainEvent'
+
+    # ───────────────────────────────────────────────
+    # PRIVACY MATRIX SCHEMAS
+    # ───────────────────────────────────────────────
+    PrivacyMatrix:
+      type: object
+      required: [id, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        data_type:
+          type: string
+        processing_purpose:
+          type: string
+        legal_basis:
+          type: string
+          enum: [consent, contract, legal_obligation, vital_interests, public_task, legitimate_interests]
+        retention_days:
+          type: integer
+        encryption_required:
+          type: boolean
+          default: true
+        cross_border:
+          type: boolean
+          default: false
+        third_parties:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PrivacyMatrixCreate:
+      type: object
+      required: [data_type, processing_purpose, legal_basis]
+      properties:
+        data_type:
+          type: string
+        processing_purpose:
+          type: string
+        legal_basis:
+          type: string
+          enum: [consent, contract, legal_obligation, vital_interests, public_task, legitimate_interests]
+        retention_days:
+          type: integer
+        encryption_required:
+          type: boolean
+        cross_border:
+          type: boolean
+        third_parties:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+
+    PrivacyMatrixUpdate:
+      type: object
+      properties:
+        data_type:
+          type: string
+        processing_purpose:
+          type: string
+        legal_basis:
+          type: string
+          enum: [consent, contract, legal_obligation, vital_interests, public_task, legitimate_interests]
+        retention_days:
+          type: integer
+        encryption_required:
+          type: boolean
+        cross_border:
+          type: boolean
+        third_parties:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+
+    EnvelopePrivacyMatrix:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/PrivacyMatrix'
+
+    PaginatedPrivacyMatrix:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PrivacyMatrix'
+
+    # ───────────────────────────────────────────────
+    # PROPOSAL SCHEMAS
+    # ───────────────────────────────────────────────
+    Proposal:
+      type: object
+      required: [id, project_id, title, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, accepted, rejected, negotiating, expired]
+        total_value:
+          type: number
+        currency:
+          type: string
+          default: EUR
+        valid_until:
+          type: string
+          format: date
+        line_items:
+          type: array
+          items:
+            type: object
+        client_id:
+          type: string
+          format: uuid
+        sent_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProposalCreate:
+      type: object
+      required: [project_id, title]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, accepted, rejected, negotiating, expired]
+        total_value:
+          type: number
+        currency:
+          type: string
+          default: EUR
+        valid_until:
+          type: string
+          format: date
+        line_items:
+          type: array
+          items:
+            type: object
+        client_id:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+
+    ProposalUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, accepted, rejected, negotiating, expired]
+        total_value:
+          type: number
+        currency:
+          type: string
+        valid_until:
+          type: string
+          format: date
+        line_items:
+          type: array
+          items:
+            type: object
+        client_id:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+
+    EnvelopeProposal:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Proposal'
+
+    PaginatedProposals:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Proposal'
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unprocessable:
+      description: Unprocessable Entity - validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

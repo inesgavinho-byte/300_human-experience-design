@@ -1,0 +1,22 @@
+{
+  "name": "300-ops-rule-engine",
+  "version": "1.0.0",
+  "description": "Rule Engine for 300 OPS - executes engineering rules from the 300 OPS database",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "cli": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "json-logic-js": "^2.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

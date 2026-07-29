@@ -1,0 +1,12 @@
+        'audio',
+        'function calculate(room) { return { audio_zone: ["estar", "jantar", "suite", "cinema", "spa", "piscina_interior"].includes(room.function) ? 1 : 0, speakers: room.area_m2 > 40 ? 4 : 2 }; }',
+        'javascript',
+        '{"min_area_for_4_speakers": 40}',
+        'Experiência 300 — áudio residencial',
+        NULL
+    )
+ON CONFLICT (code) DO NOTHING;
+
+-- ============================================================
+-- FIM DA MIGRATION INCREMENTAL
+-- ============================================================

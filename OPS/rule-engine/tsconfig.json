@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
+  },
+  "include": [
+    "src/types.ts",
+    "src/engine.ts",
+    "src/index.ts",
+    "src/cli.ts",
+    "src/rules/built-in.ts",
+    "src/json-logic-js.d.ts"
+  ]
+}
