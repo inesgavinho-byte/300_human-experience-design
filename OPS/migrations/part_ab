@@ -1,0 +1,280 @@
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'private'
+    CHECK (type IN ('private', 'company', 'developer', 'hotel_group'));
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS preferences JSONB DEFAULT '{}';
+COMMENT ON TABLE clients IS 'Entidades cliente da 300 OPS (enriquecido com Mandato §3)';
+
+-- 3.3 suppliers — adicionar campos em falta
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS payment_terms TEXT;
+-- vat_number já existe (equivalente a tax_id)
+-- lead_time_days já existe
+-- is_active já existe
+COMMENT ON TABLE suppliers IS 'Fornecedores de equipamentos e serviços (enriquecido com Mandato §12)';
+
+-- 3.4 projects — adicionar campos do Engineering Engine
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS code TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS ops_status project_ops_status DEFAULT 'draft';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS building_type building_type;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS total_area_m2 DECIMAL(10,2);
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS num_floors INTEGER;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS num_rooms INTEGER;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget_total DECIMAL(15,2);
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget_flexibility budget_flexibility DEFAULT 'fixed';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS solution_level solution_level DEFAULT 'recommended';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_profile JSONB DEFAULT '{}';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES profiles(id) ON DELETE SET NULL;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES profiles(id) ON DELETE SET NULL;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+
+-- Constraint de aprovação
+ALTER TABLE projects DROP CONSTRAINT IF EXISTS valid_project_approval;
+ALTER TABLE projects ADD CONSTRAINT valid_project_approval CHECK (
+    (approved_by IS NULL AND approved_at IS NULL) OR
+    (approved_by IS NOT NULL AND approved_at IS NOT NULL)
+);
+
+-- Índices novos
+CREATE INDEX IF NOT EXISTS idx_projects_code ON projects(code);
+CREATE INDEX IF NOT EXISTS idx_projects_building_type ON projects(building_type);
+CREATE INDEX IF NOT EXISTS idx_projects_ops_status ON projects(ops_status);
+
+-- Trigger para gerar código automático
+DROP TRIGGER IF EXISTS trg_projects_generate_code ON projects;
+CREATE TRIGGER trg_projects_generate_code
+    BEFORE INSERT ON projects
+    FOR EACH ROW
+    WHEN (NEW.code IS NULL)
+    EXECUTE FUNCTION generate_project_code();
+
+COMMENT ON TABLE projects IS 'Projecto 300 OPS — unidade central de trabalho (enriquecido com Mandato §3, §5)';
+
+-- 3.5 proposals — adicionar campos do Proposal Generator (Mandato §13)
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS solution_level solution_level;
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS summary TEXT;
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS vision_text TEXT;
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS building_reading TEXT;
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS identified_needs JSONB DEFAULT '[]';
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS experiences JSONB DEFAULT '[]';
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS systems_summary JSONB DEFAULT '[]';
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS ai_local_summary TEXT;
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS interfaces_summary JSONB DEFAULT '[]';
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]';
+
+-- Custos detalhados
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS investment_total DECIMAL(15,2);
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS installation_cost DECIMAL(15,2);
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS programming_cost DECIMAL(15,2);
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS commissioning_cost DECIMAL(15,2);
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS licenses_cost DECIMAL(15,2);
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS annual_maintenance DECIMAL(15,2);
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS subscriptions_annual DECIMAL(15,2);
+
+-- TCO
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS estimated_consumption_annual DECIMAL(15,2);
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS estimated_lifespan_years INTEGER;
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS estimated_replacement_cost DECIMAL(15,2);
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS total_cost_of_ownership DECIMAL(15,2);
+
+-- Exclusões e pressupostos
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS exclusions JSONB DEFAULT '[]';
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS assumptions JSONB DEFAULT '[]';
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS next_steps JSONB DEFAULT '[]';
+
+-- Prazo
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS estimated_duration_weeks INTEGER;
+
+-- Metadados
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS sent_to JSONB DEFAULT '[]';
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES profiles(id) ON DELETE SET NULL;
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+
+-- Constraint de aprovação
+ALTER TABLE proposals DROP CONSTRAINT IF EXISTS valid_proposal_approval;
+ALTER TABLE proposals ADD CONSTRAINT valid_proposal_approval CHECK (
+    (approved_by IS NULL AND approved_at IS NULL) OR
+    (approved_by IS NOT NULL AND approved_at IS NOT NULL)
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposals_solution_level ON proposals(solution_level);
+
+COMMENT ON TABLE proposals IS 'Proposta editorial para o cliente conforme Mandato §13 (enriquecida)';
+
+-- 3.6 equipment — adicionar campos do sistema de objetos
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS library_id UUID;
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS subsystem_id UUID;
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS technical_zone_id UUID;
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS equipment_code TEXT;
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS position_geometry GEOMETRY(POINT, 4326);
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS specifications JSONB DEFAULT '{}';
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS installation_status equipment_install_status DEFAULT 'planned';
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS commissioning_status equipment_commission_status DEFAULT 'pending';
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS installation_cost DECIMAL(12,2);
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS programming_cost DECIMAL(12,2);
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS ordered_at TIMESTAMPTZ;
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS installed_at TIMESTAMPTZ;
+ALTER TABLE equipment ADD COLUMN IF NOT EXISTS commissioned_at TIMESTAMPTZ;
+
+CREATE INDEX IF NOT EXISTS idx_equipment_library ON equipment(library_id);
+CREATE INDEX IF NOT EXISTS idx_equipment_install_status ON equipment(installation_status);
+
+COMMENT ON TABLE equipment IS 'Equipamento específico de um projecto (enriquecido com Mandato §11)';
+
+-- ============================================================
+-- 4. NOVAS TABELAS — HIERARQUIA ESPACIAL
+-- ============================================================
+
+CREATE TABLE buildings (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name            TEXT NOT NULL,
+    perimeter       GEOMETRY(POLYGON, 4326),
+    total_area_m2   DECIMAL(10,2),
+    num_floors      INTEGER,
+    orientation     DECIMAL(5,2),
+    address         TEXT,
+    metadata        JSONB DEFAULT '{}',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE buildings IS 'Edifício dentro de um projecto';
+CREATE INDEX idx_buildings_project ON buildings(project_id);
+CREATE TRIGGER trg_buildings_updated_at BEFORE UPDATE ON buildings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE floors (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    building_id     UUID NOT NULL REFERENCES buildings(id) ON DELETE CASCADE,
+    floor_number    INTEGER NOT NULL,
+    name            TEXT,
+    area_m2         DECIMAL(10,2),
+    height_m        DECIMAL(5,2),
+    plan_dwg_url    TEXT,
+    plan_image_url  TEXT,
+    metadata        JSONB DEFAULT '{}',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE floors IS 'Piso/andar de um edifício';
+CREATE INDEX idx_floors_building ON floors(building_id);
+CREATE TRIGGER trg_floors_updated_at BEFORE UPDATE ON floors
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE rooms (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    floor_id        UUID NOT NULL REFERENCES floors(id) ON DELETE CASCADE,
+    name            TEXT NOT NULL,
+    function        room_function NOT NULL DEFAULT 'outro',
+    area_m2         DECIMAL(10,2),
+    perimeter       GEOMETRY(POLYGON, 4326),
+    orientation     room_orientation,
+    detection_state detection_state NOT NULL DEFAULT 'inferred',
+    has_windows     BOOLEAN DEFAULT false,
+    num_windows     INTEGER DEFAULT 0,
+    has_balcony     BOOLEAN DEFAULT false,
+    is_wet_zone     BOOLEAN DEFAULT false,
+    is_circulation  BOOLEAN DEFAULT false,
+    is_technical    BOOLEAN DEFAULT false,
+    is_staff_area   BOOLEAN DEFAULT false,
+    functional_requirements JSONB DEFAULT '{}',
+    metadata        JSONB DEFAULT '{}',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE rooms IS 'Divisão/ambiente dentro de um piso. detection_state: confirmed/detected/inferred/to_confirm/unavailable';
+CREATE INDEX idx_rooms_floor ON rooms(floor_id);
+CREATE INDEX idx_rooms_function ON rooms(function);
+CREATE INDEX idx_rooms_detection ON rooms(detection_state);
+CREATE TRIGGER trg_rooms_updated_at BEFORE UPDATE ON rooms
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- 5. NOVAS TABELAS — REQUISITOS E EXPERIÊNCIAS
+-- ============================================================
+
+CREATE TABLE requirements (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id          UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    room_id             UUID REFERENCES rooms(id) ON DELETE SET NULL,
+    category            requirement_category NOT NULL,
+    subcategory         TEXT,
+    description         TEXT NOT NULL,
+    level_essential     BOOLEAN DEFAULT false,
+    level_recommended   BOOLEAN DEFAULT false,
+    level_signature     BOOLEAN DEFAULT false,
+    status              requirement_status DEFAULT 'pending',
+    priority            INTEGER NOT NULL DEFAULT 3 CHECK (priority BETWEEN 1 AND 5),
+    source              TEXT DEFAULT 'client',
+    source_reference    TEXT,
+    validated_by        UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    validated_at        TIMESTAMPTZ,
+    metadata            JSONB DEFAULT '{}',
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE requirements IS 'Requisitos funcionais por projecto ou por divisão (Mandato §4)';
+CREATE INDEX idx_requirements_project ON requirements(project_id);
+CREATE INDEX idx_requirements_room ON requirements(room_id);
+CREATE INDEX idx_requirements_category ON requirements(category);
+CREATE TRIGGER trg_requirements_updated_at BEFORE UPDATE ON requirements
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE experiences (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id          UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name                TEXT NOT NULL,
+    description         TEXT,
+    trigger_type        experience_trigger DEFAULT 'manual',
+    actions             JSONB NOT NULL DEFAULT '[]',
+    trigger_conditions  JSONB DEFAULT '{}',
+    is_active           BOOLEAN DEFAULT true,
+    created_by          UUID NOT NULL REFERENCES profiles(id),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE experiences IS 'Experiências programáveis: cenas, rotinas, automações (Mandato §8.2, §16.3)';
+CREATE INDEX idx_experiences_project ON experiences(project_id);
+CREATE TRIGGER trg_experiences_updated_at BEFORE UPDATE ON experiences
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- 6. NOVAS TABELAS — SISTEMAS E SUBSISTEMAS
+-- ============================================================
+
+CREATE TABLE systems (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    code            TEXT NOT NULL,
+    name            TEXT NOT NULL,
+    category        system_category NOT NULL,
+    protocol        TEXT,
+    description     TEXT,
+    status          system_status DEFAULT 'design',
+    topology        JSONB DEFAULT '{}',
+    metadata        JSONB DEFAULT '{}',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE systems IS 'Sistema técnico de um projecto (iluminação, climatização, etc.)';
+CREATE INDEX idx_systems_project ON systems(project_id);
+CREATE INDEX idx_systems_category ON systems(category);
+CREATE TRIGGER trg_systems_updated_at BEFORE UPDATE ON systems
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE subsystems (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    system_id       UUID NOT NULL REFERENCES systems(id) ON DELETE CASCADE,
+    code            TEXT NOT NULL,
+    name            TEXT NOT NULL,
+    function        TEXT,
+    topology        JSONB DEFAULT '{}',
+    metadata        JSONB DEFAULT '{}',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE subsystems IS 'Subsistema dentro de um sistema';
+CREATE INDEX idx_subsystems_system ON subsystems(system_id);
+CREATE TRIGGER trg_subsystems_updated_at BEFORE UPDATE ON subsystems

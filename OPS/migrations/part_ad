@@ -1,0 +1,280 @@
+    validation_notes    TEXT,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE explanation_logs IS 'Log de explicabilidade de cada recomendação do motor de engenharia conforme Mandato §2.3';
+CREATE INDEX idx_explanations_project ON explanation_logs(project_id);
+CREATE INDEX idx_explanations_entity ON explanation_logs(entity_type, entity_id);
+CREATE INDEX idx_explanations_validation ON explanation_logs(needs_human_validation, validated_at);
+
+-- Event Store (Single Source of Truth)
+CREATE TABLE domain_events (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    aggregate_type      TEXT NOT NULL,
+    aggregate_id        UUID NOT NULL,
+    event_type          TEXT NOT NULL,
+    event_version       INTEGER NOT NULL DEFAULT 1,
+    payload             JSONB NOT NULL,
+    correlation_id      UUID,
+    causation_id        UUID,
+    emitted_by          UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    emitted_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    processed           BOOLEAN DEFAULT false,
+    processed_at        TIMESTAMPTZ,
+    processed_by        TEXT,
+    processing_error    TEXT,
+    sequence_number     BIGSERIAL
+);
+COMMENT ON TABLE domain_events IS 'Event store para single source of truth e audit trail completo conforme Mandato §2.1';
+CREATE INDEX idx_events_aggregate ON domain_events(aggregate_type, aggregate_id, sequence_number);
+CREATE INDEX idx_events_unprocessed ON domain_events(processed, emitted_at);
+CREATE INDEX idx_events_correlation ON domain_events(correlation_id);
+CREATE INDEX idx_events_type ON domain_events(event_type, emitted_at);
+
+-- ============================================================
+-- 13. NOVA TABELA — PRIVACY MATRIX (Mandato §17.2)
+-- ============================================================
+
+CREATE TABLE privacy_matrix (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id          UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    room_id             UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+    voice_capture       BOOLEAN DEFAULT false,
+    voice_retention_days INTEGER DEFAULT 0,
+    face_recognition    BOOLEAN DEFAULT false,
+    camera_enabled      BOOLEAN DEFAULT false,
+    camera_retention_days INTEGER DEFAULT 0,
+    local_storage_only  BOOLEAN DEFAULT true,
+    cloud_allowed       BOOLEAN DEFAULT false,
+    cloud_purpose       TEXT,
+    authorized_users    JSONB DEFAULT '[]',
+    privacy_mode_available BOOLEAN DEFAULT true,
+    privacy_mode_active BOOLEAN DEFAULT false,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_by          UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    UNIQUE(project_id, room_id)
+);
+COMMENT ON TABLE privacy_matrix IS 'Matriz de privacidade por divisão conforme Mandato §17.2';
+CREATE TRIGGER trg_privacy_updated_at BEFORE UPDATE ON privacy_matrix
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- 14. NOVA TABELA — REGRAS DE ENGENHARIA (Mandato §6.2, §11.2)
+-- ============================================================
+
+CREATE TABLE engineering_rules (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code                TEXT NOT NULL UNIQUE,
+    name                TEXT NOT NULL,
+    description         TEXT,
+    category            rule_category NOT NULL,
+    applies_to_type     building_type[],
+    rule_expression     TEXT NOT NULL,
+    rule_language       TEXT DEFAULT 'javascript' CHECK (rule_language IN ('javascript', 'python', 'sql', 'json_logic')),
+    parameters          JSONB DEFAULT '{}',
+    preconditions       JSONB DEFAULT '[]',
+    exclusions          JSONB DEFAULT '[]',
+    incompatibilities   JSONB DEFAULT '[]',
+    source              TEXT,
+    version             INTEGER NOT NULL DEFAULT 1,
+    author              UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    approval_status     rule_approval_status DEFAULT 'draft',
+    is_active           BOOLEAN DEFAULT true,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE engineering_rules IS 'Biblioteca de regras de engenharia parametrizáveis conforme Mandato §11.2';
+CREATE INDEX idx_rules_category ON engineering_rules(category);
+CREATE INDEX idx_rules_active ON engineering_rules(is_active, approval_status);
+CREATE TRIGGER trg_rules_updated_at BEFORE UPDATE ON engineering_rules
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Adicionar FK de explanation_logs -> engineering_rules (já existe mas reforçar)
+-- Já foi definida na criação de explanation_logs
+
+-- ============================================================
+-- 15. RLS — MULTI-TENANCY POR PROJETO (tabelas novas)
+-- ============================================================
+
+-- Função para obter projectos acessíveis ao utilizador actual
+CREATE OR REPLACE FUNCTION get_user_project_ids()
+RETURNS SETOF UUID AS $$
+BEGIN
+    RETURN QUERY SELECT id FROM projects;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+ALTER TABLE buildings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE floors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE requirements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE experiences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE systems ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subsystems ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_library ENABLE ROW LEVEL SECURITY;
+ALTER TABLE technical_zones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prescriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE integrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_local_servers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_learned_patterns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE explanation_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE domain_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE privacy_matrix ENABLE ROW LEVEL SECURITY;
+ALTER TABLE engineering_rules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY buildings_isolation ON buildings
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY floors_isolation ON floors
+    USING (building_id IN (SELECT id FROM buildings WHERE project_id IN (SELECT get_user_project_ids())));
+CREATE POLICY rooms_isolation ON rooms
+    USING (floor_id IN (
+        SELECT f.id FROM floors f
+        JOIN buildings b ON b.id = f.building_id
+        WHERE b.project_id IN (SELECT get_user_project_ids())
+    ));
+CREATE POLICY requirements_isolation ON requirements
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY experiences_isolation ON experiences
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY systems_isolation ON systems
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY subsystems_isolation ON subsystems
+    USING (system_id IN (SELECT id FROM systems WHERE project_id IN (SELECT get_user_project_ids())));
+CREATE POLICY equip_lib_isolation ON equipment_library
+    USING (true);  -- Biblioteca é global; ajustar conforme necessidade
+CREATE POLICY zones_isolation ON technical_zones
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY prescriptions_isolation ON prescriptions
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY integrations_isolation ON integrations
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY ai_servers_isolation ON ai_local_servers
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY ai_patterns_isolation ON ai_learned_patterns
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY explanations_isolation ON explanation_logs
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY events_isolation ON domain_events
+    USING (aggregate_id IN (SELECT id FROM projects WHERE id IN (SELECT get_user_project_ids())));
+CREATE POLICY privacy_isolation ON privacy_matrix
+    USING (project_id IN (SELECT get_user_project_ids()));
+CREATE POLICY rules_isolation ON engineering_rules
+    USING (true);  -- Regras são globais; ajustar conforme necessidade
+
+-- ============================================================
+-- 16. VIEWS ÚTEIS
+-- ============================================================
+
+CREATE OR REPLACE VIEW project_summary AS
+SELECT 
+    p.id,
+    p.code,
+    p.name,
+    p.status AS legacy_status,
+    p.ops_status,
+    p.building_type,
+    p.solution_level,
+    c.name AS client_name,
+    COUNT(DISTINCT b.id) AS num_buildings,
+    COUNT(DISTINCT f.id) AS num_floors,
+    COUNT(DISTINCT r.id) AS num_rooms,
+    COUNT(DISTINCT s.id) AS num_systems,
+    COUNT(DISTINCT pr.id) AS num_prescriptions,
+    COUNT(DISTINCT eq.id) AS num_equipment,
+    p.created_at,
+    p.approved_at
+FROM projects p
+LEFT JOIN clients c ON c.id = p.client_id
+LEFT JOIN buildings b ON b.project_id = p.id
+LEFT JOIN floors f ON f.building_id = b.id
+LEFT JOIN rooms r ON r.floor_id = f.id
+LEFT JOIN systems s ON s.project_id = p.id
+LEFT JOIN prescriptions pr ON pr.project_id = p.id
+LEFT JOIN equipment eq ON eq.project_id = p.id
+GROUP BY p.id, p.code, p.name, p.status, p.ops_status, p.building_type, p.solution_level, c.name, p.created_at, p.approved_at;
+
+COMMENT ON VIEW project_summary IS 'Resumo consolidado de cada projeto com contagens de entidades';
+
+CREATE OR REPLACE VIEW room_prescription_matrix AS
+SELECT 
+    r.id AS room_id,
+    r.name AS room_name,
+    r.function AS room_function,
+    r.area_m2,
+    f.name AS floor_name,
+    b.name AS building_name,
+    p.id AS project_id,
+    COUNT(DISTINCT CASE WHEN pr.category = 'iluminacao' THEN pr.id END) AS lighting_prescriptions,
+    COUNT(DISTINCT CASE WHEN pr.category = 'cortinas' THEN pr.id END) AS curtain_prescriptions,
+    COUNT(DISTINCT CASE WHEN pr.category = 'climatizacao' THEN pr.id END) AS climate_prescriptions,
+    COUNT(DISTINCT CASE WHEN pr.category = 'audio' THEN pr.id END) AS audio_prescriptions,
+    COUNT(DISTINCT CASE WHEN pr.category = 'video' THEN pr.id END) AS video_prescriptions,
+    COUNT(DISTINCT CASE WHEN pr.category = 'seguranca' THEN pr.id END) AS security_prescriptions,
+    COUNT(DISTINCT CASE WHEN pr.category = 'rede' THEN pr.id END) AS network_prescriptions,
+    COUNT(DISTINCT eq.id) AS total_equipment,
+    SUM(eq.quantity) AS total_equipment_quantity,
+    SUM(COALESCE(eq.unit_price, 0) * COALESCE(eq.quantity, 1)) AS estimated_equipment_cost
+FROM rooms r
+JOIN floors f ON f.id = r.floor_id
+JOIN buildings b ON b.id = f.building_id
+JOIN projects p ON p.id = b.project_id
+LEFT JOIN requirements req ON req.room_id = r.id
+LEFT JOIN prescriptions pr ON pr.room_id = r.id
+LEFT JOIN equipment eq ON eq.room_id = r.id
+GROUP BY r.id, r.name, r.function, r.area_m2, f.name, b.name, p.id;
+
+COMMENT ON VIEW room_prescription_matrix IS 'Matriz de prescrições por divisão conforme Mandato §8.5';
+
+-- ============================================================
+-- 17. SEED DATA — Regras de engenharia de exemplo (Mandato §6.3)
+-- ============================================================
+
+INSERT INTO engineering_rules (code, name, description, category, rule_expression, rule_language, parameters, source, author) VALUES
+    (
+        'ILU-001',
+        'Cálculo de spots — sala estar/jantar',
+        'Número de spots baseado na área da divisão para uso estar/jantar',
+        'iluminacao',
+        'function calculate(room) { const base = Math.ceil(room.area_m2 / 4); return { spots: { min: base, max: Math.ceil(base * 1.3) } }; }',
+        'javascript',
+        '{"area_factor": 4, "max_variation": 1.3, "min_spacing_m": 2.5}',
+        'Experiência 300 — iluminação residencial',
+        NULL
+    ),
+    (
+        'ILU-002',
+        'Circuitos de iluminação — sala',
+        'Divisão de circuitos por tipo de iluminação',
+        'iluminacao',
+        'function calculate(room, level) { const circuits = { general: level === "essential" ? 2 : 3, decorative: level === "signature" ? 2 : 1, led: 2 }; return circuits; }',
+        'javascript',
+        '{"general_essential": 2, "general_recommended": 3, "general_signature": 3, "decorative_signature": 2}',
+        'NFC 15-100 adaptado',
+        NULL
+    ),
+    (
+        'ILU-003',
+        'Spots sala 58m² — exemplo mandato',
+        'Sala de estar+jantar com 58m², nível Recommended: 14-18 spots, 3 circuitos geral, 2 decorativos, 2 LED, sensor, interface, 2 zonas cortina, 1 zona climatização, 1 zona áudio, 1 ponto voz, 1 ponto Wi-Fi, 2 cenas, Master Off',
+        'iluminacao',
+        'function calculate(room, level) { return { spots: { min: 14, max: 18 }, circuits_general: 3, circuits_decorative: 2, circuits_led: 2, sensor_presence: 1, wall_interface: 1, curtain_zones: 2, climate_zone: 1, audio_zone: 1, voice_point: 1, wifi_point: 1, local_scenes: 2, master_off: true }; }',
+        'javascript',
+        '{"min_spots": 14, "max_spots": 18}',
+        'Mandato 300 OPS §6.3',
+        NULL
+    ),
+    (
+        'CLI-001',
+        'Zonas de climatização — divisão',
+        'Uma zona de climatização por divisão com area > 25m2 ou uso especial',
+        'climatizacao',
+        'function calculate(room) { return { zones: room.area_m2 > 25 || ["estar", "suite", "escritorio"].includes(room.function) ? 1 : 0 }; }',
+        'javascript',
+        '{"min_area_for_zone": 25, "functions_requiring_zone": ["estar", "suite", "escritorio"]}',
+        'Experiência 300 — conforto térmico',
+        NULL
+    ),
+    (
+        'AUD-001',
+        'Zonas de áudio — divisão social',
+        'Uma zona de áudio por divisão de estar, jantar ou suite',

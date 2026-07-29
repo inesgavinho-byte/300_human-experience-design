@@ -1,0 +1,280 @@
+-- ============================================================
+-- 300 OPS — Migration Incremental v2
+-- Adaptação ao schema existente do 300-ops-platform
+-- Preserva TODAS as tabelas e dados existentes
+-- ============================================================
+
+-- ============================================================
+-- 0. EXTENSIONS (idempotente)
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS "postgis";
+CREATE EXTENSION IF NOT EXISTS "pgvector";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ============================================================
+-- 1. ENUMS (idempotente com DO blocks)
+-- ============================================================
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'building_type') THEN
+        CREATE TYPE building_type AS ENUM (
+            'apartamento', 'penthouse', 'moradia', 'villa_grande',
+            'edificio_multifamiliar', 'hotel', 'aparthotel', 'resort',
+            'escritorio', 'retail', 'espaco_saude', 'residencia_senior'
+        );
+    END IF;
+END $$;
+COMMENT ON TYPE building_type IS 'Classificação tipológica do imóvel conforme Mandato §3.3';
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'solution_level') THEN
+        CREATE TYPE solution_level AS ENUM ('essential', 'recommended', 'signature');
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'detection_state') THEN
+        CREATE TYPE detection_state AS ENUM (
+            'confirmed', 'detected', 'inferred', 'to_confirm', 'unavailable'
+        );
+    END IF;
+END $$;
+COMMENT ON TYPE detection_state IS 'Estado de cada elemento detectado na planta. Nunca tratar inferred como confirmed.';
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'requirement_category') THEN
+        CREATE TYPE requirement_category AS ENUM (
+            'iluminacao', 'cortinas', 'climatizacao', 'piso_radiante',
+            'vmc', 'piscina', 'spa', 'sauna', 'ice_bath',
+            'audio', 'video', 'cinema', 'controlo_voz', 'tablets',
+            'seguranca', 'cctv', 'controlo_acessos', 'carregamento_eletrico',
+            'fotovoltaico', 'baterias', 'rega', 'agua', 'rede',
+            'ia_local', 'aprendizagem', 'atuacao_preditiva'
+        );
+    END IF;
+END $$;
+COMMENT ON TYPE requirement_category IS 'Categorias de requisitos funcionais conforme Mandato §4.1';
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'requirement_status') THEN
+        CREATE TYPE requirement_status AS ENUM ('pending', 'confirmed', 'rejected', 'superseded');
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'room_function') THEN
+        CREATE TYPE room_function AS ENUM (
+            'estar', 'jantar', 'quarto', 'suite', 'cozinha', 'wc',
+            'hall', 'corredor', 'escritorio', 'ginasio', 'cinema',
+            'spa', 'piscina_interior', 'garagem', 'arrumos', 'terraco',
+            'jardim', 'zona_tecnica', 'staff', 'outro'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'room_orientation') THEN
+        CREATE TYPE room_orientation AS ENUM (
+            'norte', 'sul', 'este', 'oeste', 'nordeste', 'noroeste', 'sudeste', 'sudoeste'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'system_category') THEN
+        CREATE TYPE system_category AS ENUM (
+            'controlo_domotica', 'interfaces_fisicas', 'iluminacao', 'cortinas_estores',
+            'climatizacao', 'sistemas_termicos', 'vmc', 'qualidade_ar', 'agua',
+            'drenagens', 'energia', 'fotovoltaico', 'baterias', 'elevador',
+            'jardim', 'rega', 'ventilacoes', 'piscina', 'acessos', 'seguranca',
+            'cctv', 'audio', 'video', 'cinema', 'rede', 'ciberseguranca',
+            'ia_local', 'voz', 'cenas', 'integracao', 'commissioning', 'manutencao'
+        );
+    END IF;
+END $$;
+COMMENT ON TYPE system_category IS 'Capítulos parametrizados do caderno de prescrição conforme Mandato §8.4';
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'system_status') THEN
+        CREATE TYPE system_status AS ENUM (
+            'design', 'approved', 'procurement', 'installation', 'commissioning', 'operational'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'equipment_install_status') THEN
+        CREATE TYPE equipment_install_status AS ENUM (
+            'planned', 'ordered', 'delivered', 'installed', 'tested'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'equipment_commission_status') THEN
+        CREATE TYPE equipment_commission_status AS ENUM (
+            'pending', 'in_progress', 'passed', 'failed', 'waived'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'equipment_category') THEN
+        CREATE TYPE equipment_category AS ENUM (
+            'spot', 'driver_led', 'controlador', 'sensor', 'teclado', 'tablet',
+            'motor_cortina', 'unidade_climatizacao', 'difusor', 'ventilador',
+            'bomba', 'filtro', 'quadro_eletrico', 'rack', 'servidor', 'ups',
+            'gateway', 'router', 'switch', 'camera', 'detetor', 'fechadura',
+            'coluna_audio', 'amplificador', 'ecra', 'projetor', 'fonte_alimentacao',
+            'modulo_io', 'atuador', 'outro'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'prescription_status') THEN
+        CREATE TYPE prescription_status AS ENUM (
+            'draft', 'review', 'approved', 'rejected', 'superseded'
+        );
+    END IF;
+END $$;
+COMMENT ON TYPE prescription_status IS 'Ciclo de vida de uma prescrição técnica';
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'budget_impact_level') THEN
+        CREATE TYPE budget_impact_level AS ENUM ('reducer', 'neutral', 'increaser', 'critical');
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'technical_zone_type') THEN
+        CREATE TYPE technical_zone_type AS ENUM (
+            'quadro_controlo', 'zona_drivers', 'rack_ti', 'rack_av',
+            'servidor_ia', 'ups', 'quadro_knx', 'quadro_dali',
+            'zona_piscina', 'zona_termica', 'zona_baterias',
+            'zona_rede', 'zona_tecnica_combinada'
+        );
+    END IF;
+END $$;
+COMMENT ON TYPE technical_zone_type IS 'Tipologia de zona técnica conforme Mandato §9.2';
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'zone_status') THEN
+        CREATE TYPE zone_status AS ENUM ('planned', 'approved', 'installed', 'commissioned');
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'security_level') THEN
+        CREATE TYPE security_level AS ENUM ('standard', 'elevated', 'critical');
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'proposal_status') THEN
+        CREATE TYPE proposal_status AS ENUM (
+            'draft', 'review', 'approved', 'sent', 'accepted', 'rejected'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ai_server_status') THEN
+        CREATE TYPE ai_server_status AS ENUM (
+            'active', 'maintenance', 'offline', 'decommissioned'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pattern_type') THEN
+        CREATE TYPE pattern_type AS ENUM (
+            'occupancy', 'temperature', 'lighting', 'air_quality', 'energy',
+            'arrival', 'pool', 'spa', 'maintenance', 'failure'
+        );
+    END IF;
+END $$;
+COMMENT ON TYPE pattern_type IS 'Domínios de padrões aprendidos pela IA local conforme Mandato §16.4-16.5';
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pattern_status') THEN
+        CREATE TYPE pattern_status AS ENUM (
+            'suggested', 'pending_approval', 'approved', 'rejected', 'active', 'revoked'
+        );
+    END IF;
+END $$;
+COMMENT ON TYPE pattern_status IS 'Ciclo de vida de padrão aprendido. Nenhum comportamento sem aprovação.';
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'rule_category') THEN
+        CREATE TYPE rule_category AS ENUM (
+            'iluminacao', 'cortinas', 'climatizacao', 'audio', 'video', 'rede',
+            'seguranca', 'energia', 'agua', 'vmc', 'integracao', 'zonas_tecnicas'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'rule_approval_status') THEN
+        CREATE TYPE rule_approval_status AS ENUM ('draft', 'under_review', 'approved', 'deprecated');
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'project_ops_status') THEN
+        CREATE TYPE project_ops_status AS ENUM (
+            'draft', 'active', 'on_hold', 'completed', 'archived'
+        );
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'budget_flexibility') THEN
+        CREATE TYPE budget_flexibility AS ENUM ('fixed', 'flexible_10', 'flexible_20', 'open');
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'experience_trigger') THEN
+        CREATE TYPE experience_trigger AS ENUM ('manual', 'schedule', 'voice', 'sensor', 'predictive', 'event');
+    END IF;
+END $$;
+
+-- ============================================================
+-- 2. FUNÇÕES AUXILIARES
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION update_updated_at_column() IS 'Trigger function para timestamp automático de updated_at';
+
+CREATE SEQUENCE IF NOT EXISTS project_code_seq START 1;
+
+CREATE OR REPLACE FUNCTION generate_project_code()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.code := '300-' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('project_code_seq')::TEXT, 3, '0');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- 3. ADAPTAR TABELAS EXISTENTES
+-- ============================================================
+
+-- 3.1 profiles — expandir roles para incluir perfis 300 OPS
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+ALTER TABLE profiles ADD CONSTRAINT profiles_role_check
+    CHECK (role = ANY (ARRAY[
+        'admin'::text, 'manager'::text, 'member'::text,
+        'engineer'::text, 'technician'::text, 'client'::text, 'viewer'::text
+    ]));
+COMMENT ON TABLE profiles IS 'Perfis de utilizadores 300 OPS (integrado com Supabase Auth)';
+
+-- 3.2 clients — adicionar campos do mandato
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS tax_id TEXT;
