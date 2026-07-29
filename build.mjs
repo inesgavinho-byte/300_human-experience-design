@@ -6,4 +6,5 @@ for (const file of ['index.html', 'styles.css', 'media.css', 'script.js']) {
   await cp(file, `${output}/${file}`);
 }
 await cp('assets', `${output}/assets`, { recursive: true });
-console.log('Static site and media prepared in .next');
+await cp('plataforma', `${output}/plataforma`, { recursive: true });
+console.log('Static site, media and plataforma prepared in .next');
