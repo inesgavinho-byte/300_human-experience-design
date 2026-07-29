@@ -1,6 +1,13 @@
-# Site estático — serve a pasta plataforma/
+# 300 OPS — Frontend Next.js (sub-site Netlify)
+# Deploy com: Base directory = OPS/frontend
+#
 [build]
-  publish = "plataforma"
+  command = "npm install && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
 
 [[headers]]
   for = "/*"
@@ -15,11 +22,12 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
-  for = "/*.css"
+  for = "/_next/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+# SPA fallback para rotas do Next.js
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
